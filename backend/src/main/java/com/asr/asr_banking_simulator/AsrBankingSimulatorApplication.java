@@ -8,6 +8,7 @@ public class AsrBankingSimulatorApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(AsrBankingSimulatorApplication.class, args);
+		
 	}
 
 }
