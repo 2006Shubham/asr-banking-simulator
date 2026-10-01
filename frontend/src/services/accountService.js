@@ -24,6 +24,14 @@ export const accountService = {
   },
 
   /**
+   * Alias for getAccountsByCustomer (matches REST consumer convention)
+   * @param {string} custId
+   */
+  getAccounts: async (custId = "CUST001") => {
+    return accountService.getAccountsByCustomer(custId);
+  },
+
+  /**
    * Get account details by account number
    * @param {string} accNo
    */

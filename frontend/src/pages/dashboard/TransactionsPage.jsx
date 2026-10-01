@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
 import {
-  ArrowLeftRight,
-  TrendingDown,
-  TrendingUp,
   Download,
-  Filter,
-  RefreshCw,
   Database,
-  ShieldCheck,
 } from "lucide-react";
 import transactionService from "../../services/transactionService";
 import { formatCurrency } from "../../utils/formatters";

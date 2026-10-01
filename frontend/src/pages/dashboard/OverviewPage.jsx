@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Wallet,
@@ -9,14 +9,16 @@ import {
   ArrowUpRight,
   Send,
   CreditCard,
-  Building,
   CheckCircle2,
-  Calendar,
-  AlertCircle,
   ShieldCheck,
-  TrendingUp,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import {
+  accountService,
+  transactionService,
+  loanService,
+  fdService,
+} from "../../services";
 import {
   mockAccounts,
   mockTransactions,
@@ -25,10 +27,37 @@ import {
 } from "../../data/mockData";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { maskAccountNumber } from "../../utils/maskers";
-import { Card, SectionHeading, Badge, Button, Modal, Input } from "../../components/common";
+import { Card, Badge, Button, Modal, Input } from "../../components/common";
 
 const OverviewPage = () => {
   const { customer } = useAuth();
+
+  // State populated via service layer (with initial mock fallback)
+  const [accounts, setAccounts] = useState(mockAccounts);
+  const [transactions, setTransactions] = useState(mockTransactions);
+  const [loans, setLoans] = useState(mockLoans);
+  const [fds, setFds] = useState(mockFDs);
+
+  useEffect(() => {
+    const loadOverviewData = async () => {
+      try {
+        const custId = customer?.custId || "CUST001";
+        const [accs, txns, lns, fixedDeps] = await Promise.all([
+          accountService.getAccountsByCustomer(custId),
+          transactionService.getTransactions(),
+          loanService.getLoansByCustomer(custId),
+          fdService.getFDsByCustomer(custId),
+        ]);
+        if (accs?.length) setAccounts(accs);
+        if (txns?.length) setTransactions(txns);
+        if (lns?.length) setLoans(lns);
+        if (fixedDeps?.length) setFds(fixedDeps);
+      } catch (e) {
+        console.warn("Overview service data load failed, using local store", e);
+      }
+    };
+    loadOverviewData();
+  }, [customer]);
 
   // Dynamic greeting based on user's current time of day
   const getGreeting = () => {
@@ -40,22 +69,24 @@ const OverviewPage = () => {
 
   const customerName = customer?.name?.split(" ")[0] || "Suraj";
 
-  // Financial summary metrics calculated from mock data
-  const totalBalance = mockAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
-  const activeLoansCount = mockLoans.filter((l) => l.status === "Active").length;
-  const totalFdAmount = mockFDs.reduce((sum, fd) => sum + (fd.amount || 0), 0);
+  // Financial summary metrics calculated from reactive state
+  const totalBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+  const activeLoansCount = loans.filter((l) => l.status === "Active").length;
+  const totalFdAmount = fds.reduce((sum, fd) => sum + (fd.amount || 0), 0);
 
   // Transfer Money Simulation Modal State
   const [transferModalOpen, setTransferModalOpen] = useState(false);
-  const [transferSourceAcc, setTransferSourceAcc] = useState(mockAccounts[0]?.accNo || "");
+  const [transferSourceAcc, setTransferSourceAcc] = useState(accounts[0]?.accNo || "ACC001");
   const [transferBeneficiary, setTransferBeneficiary] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
   const [transferChannel, setTransferChannel] = useState("UPI");
   const [transferStatus, setTransferStatus] = useState(null); // null | 'success'
+  const [transferReceipt, setTransferReceipt] = useState(null);
 
   // Pay Loan EMI Simulation Modal State
   const [loanModalOpen, setLoanModalOpen] = useState(false);
   const [loanPayStatus, setLoanPayStatus] = useState(null);
+  const [loanReceipt, setLoanReceipt] = useState(null);
 
   const handleSimulateTransfer = (e) => {
     e.preventDefault();
@@ -63,6 +94,10 @@ const OverviewPage = () => {
 
     setTransferStatus("processing");
     setTimeout(() => {
+      setTransferReceipt({
+        ref: `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date().toLocaleString("en-IN"),
+      });
       setTransferStatus("success");
     }, 500);
   };
@@ -70,6 +105,9 @@ const OverviewPage = () => {
   const handleSimulateLoanPay = () => {
     setLoanPayStatus("processing");
     setTimeout(() => {
+      setLoanReceipt({
+        ref: `EMI-LN001-${Math.floor(100000 + Math.random() * 900000)}`,
+      });
       setLoanPayStatus("success");
     }, 500);
   };
@@ -77,6 +115,7 @@ const OverviewPage = () => {
   const resetTransferModal = () => {
     setTransferModalOpen(false);
     setTransferStatus(null);
+    setTransferReceipt(null);
     setTransferBeneficiary("");
     setTransferAmount("");
   };
@@ -84,6 +123,7 @@ const OverviewPage = () => {
   const resetLoanModal = () => {
     setLoanModalOpen(false);
     setLoanPayStatus(null);
+    setLoanReceipt(null);
   };
 
   return (
@@ -124,7 +164,7 @@ const OverviewPage = () => {
               {formatCurrency(totalBalance)}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Consolidated across {mockAccounts.length} active bank accounts
+              Consolidated across {accounts.length} active bank accounts
             </p>
           </div>
 
@@ -151,7 +191,7 @@ const OverviewPage = () => {
               {activeLoansCount} {activeLoansCount === 1 ? "Loan" : "Loans"}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Personal Loan #{mockLoans[0]?.loanId} • {formatCurrency(mockLoans[0]?.amount)}
+              {loans[0] ? `${loans[0].loanType} Loan #${loans[0].loanId} • ${formatCurrency(loans[0].amount)}` : "No active loans"}
             </p>
           </div>
 
@@ -178,14 +218,14 @@ const OverviewPage = () => {
               {formatCurrency(totalFdAmount)}
             </p>
             <p className="text-xs text-slate-500 mt-1">
-              Deposit #{mockFDs[0]?.fdId} • 7.20% Annual Interest
+              {fds[0] ? `Deposit #${fds[0].fdId} • ${fds[0].interestRate}% Annual Interest` : "No active fixed deposits"}
             </p>
           </div>
 
           <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
             <span className="text-slate-400 font-medium">Matures</span>
             <span className="font-semibold text-slate-700">
-              {formatDate(mockFDs[0]?.maturityDate)}
+              {fds[0] ? formatDate(fds[0].maturityDate) : "—"}
             </span>
           </div>
         </Card>
@@ -284,7 +324,7 @@ const OverviewPage = () => {
             }
           >
             <div className="divide-y divide-slate-100">
-              {mockTransactions.slice(0, 4).map((txn) => {
+              {transactions.slice(0, 4).map((txn) => {
                 const isCredit = txn.txnType === "Credit";
                 return (
                   <div
@@ -441,9 +481,9 @@ const OverviewPage = () => {
               <strong>{transferBeneficiary}</strong> via {transferChannel}.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
-              <p>Reference: TXN{Math.floor(100000 + Math.random() * 900000)}</p>
+              <p>Reference: {transferReceipt?.ref || "TXN102938"}</p>
               <p>Channel: {transferChannel}</p>
-              <p>Timestamp: {new Date().toLocaleString("en-IN")}</p>
+              <p>Timestamp: {transferReceipt?.date || "01/10/2026, 12:00:00 PM"}</p>
             </div>
             <p className="text-[11px] text-amber-700 italic">
               Notice: This is an academic demo simulation. No actual funds were debited.
@@ -460,7 +500,7 @@ const OverviewPage = () => {
                 onChange={(e) => setTransferSourceAcc(e.target.value)}
                 className="w-full text-xs rounded-lg border border-slate-300 p-2.5 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003366]/20"
               >
-                {mockAccounts.map((acc) => (
+                {accounts.map((acc) => (
                   <option key={acc.accNo} value={acc.accNo}>
                     {acc.accType} Account ({maskAccountNumber(acc.accNo)}) - Balance: {formatCurrency(acc.balance)}
                   </option>
@@ -545,7 +585,7 @@ const OverviewPage = () => {
               Installment #3 for Personal Loan #LN001 has been marked as <strong>Paid</strong> in the simulator ledger.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
-              <p>Receipt Ref: EMI-LN001-{Date.now().toString().slice(-6)}</p>
+              <p>Receipt Ref: {loanReceipt?.ref || "EMI-LN001-992104"}</p>
               <p>Amount Paid: ₹9,500.00</p>
               <p>Status: Success (Simulation)</p>
             </div>

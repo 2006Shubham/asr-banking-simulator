@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, Database, Award, CheckCircle } from "lucide-react";
+import { ShieldCheck, Database } from "lucide-react";
 
 const TrustStats = () => {
   const stats = [

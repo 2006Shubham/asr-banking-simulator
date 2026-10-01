@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
-  BadgePercent,
-  Calendar,
-  Clock,
   ShieldCheck,
   CheckCircle2,
-  AlertCircle,
   Database,
-  ArrowRight,
-  TrendingDown,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import loanService from "../../services/loanService";
@@ -29,6 +22,7 @@ const LoansPage = () => {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [selectedInstallment, setSelectedInstallment] = useState(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentReceipt, setPaymentReceipt] = useState(null);
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
@@ -84,6 +78,10 @@ const LoansPage = () => {
         return { ...prevMap, [selectedLoan.loanId]: updated };
       });
 
+      setPaymentReceipt({
+        id: `RCP-EMI-${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date().toLocaleDateString("en-IN"),
+      });
       setProcessing(false);
       setPaymentSuccess(true);
     }, 500);
@@ -94,6 +92,7 @@ const LoansPage = () => {
     setSelectedLoan(null);
     setSelectedInstallment(null);
     setPaymentSuccess(false);
+    setPaymentReceipt(null);
   };
 
   if (loading) {
@@ -232,8 +231,8 @@ const LoansPage = () => {
               <strong>{formatCurrency(selectedInstallment?.amount || 0)}</strong> has been marked as <strong>Paid</strong> in the simulator ledger.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left space-y-1">
-              <p>Receipt ID: RCP-EMI-{Date.now().toString().slice(-6)}</p>
-              <p>Paid On: {new Date().toLocaleDateString("en-IN")}</p>
+              <p>Receipt ID: {paymentReceipt?.id || "RCP-EMI-104928"}</p>
+              <p>Paid On: {paymentReceipt?.date || "01/10/2026"}</p>
               <p>Auto-Debit Account: {maskAccountNumber("ACC001")}</p>
             </div>
           </div>

@@ -5,14 +5,9 @@ import {
   Clock,
   ChevronDown,
   ChevronUp,
-  Percent,
   CheckCircle2,
-  AlertCircle,
   Car,
   Home,
-  User,
-  ShieldCheck,
-  CreditCard,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { Card, Badge, Button } from "../common";

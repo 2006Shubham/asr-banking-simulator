@@ -7,7 +7,6 @@ import {
   Calendar,
   ArrowRight,
   TrendingUp,
-  ShieldCheck,
   Send,
   Building,
 } from "lucide-react";
