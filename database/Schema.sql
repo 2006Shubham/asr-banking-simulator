@@ -32,3 +32,15 @@ CREATE TABLE IF NOT EXISTS Account
     CONSTRAINT chk_status CHECK(status in ('Active', 'Dormant','Frozen', 'Closed'))
 )
 
+
+CREATE TABLE IF NOT EXISTS Branch
+(
+    branch_id INT AUTO_INCREMENT,
+    branch_name VARCHAR(20) NOT NULL,
+    branch_city VARCHAR(50) NOT NULL,
+    branch_address VARCHAR(150),
+    branch_contact VARCHAR(15),
+    branch_asset DECIMAL(15,2) DEFAULT 0.00,
+
+    PRIMARY KEY(branch_id)
+)
