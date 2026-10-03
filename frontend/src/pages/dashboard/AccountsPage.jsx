@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
-  Wallet,
-  PlusCircle,
   ShieldCheck,
   Send,
-  ArrowRight,
-  TrendingUp,
-  Download,
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -29,6 +23,7 @@ const AccountsPage = () => {
   const [transferAmount, setTransferAmount] = useState("");
   const [transferChannel, setTransferChannel] = useState("UPI");
   const [transferSuccess, setTransferSuccess] = useState(false);
+  const [transferReceipt, setTransferReceipt] = useState(null);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -54,12 +49,17 @@ const AccountsPage = () => {
   const handleOpenTransfer = (accNo) => {
     setSelectedAccNo(accNo || accounts[0]?.accNo || "");
     setTransferSuccess(false);
+    setTransferReceipt(null);
     setTransferModalOpen(true);
   };
 
   const handleExecuteTransfer = (e) => {
     e.preventDefault();
     if (!transferBeneficiary || !transferAmount) return;
+    setTransferReceipt({
+      ref: `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+      date: new Date().toLocaleString("en-IN"),
+    });
     setTransferSuccess(true);
   };
 
@@ -202,9 +202,9 @@ const AccountsPage = () => {
               <strong>{transferBeneficiary}</strong> via {transferChannel}.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
-              <p>Reference: TXN{Math.floor(100000 + Math.random() * 900000)}</p>
+              <p>Reference: {transferReceipt?.ref || "TXN829104"}</p>
               <p>Debit Account: {selectedAccNo}</p>
-              <p>Date: {new Date().toLocaleString("en-IN")}</p>
+              <p>Date: {transferReceipt?.date || "01/10/2026, 12:00:00 PM"}</p>
             </div>
           </div>
         ) : (

@@ -1,6 +1,5 @@
 import React from "react";
-import { ShieldCheck, Clock, Zap, UserCheck, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ShieldCheck, Clock, Zap, UserCheck } from "lucide-react";
 import { Card, SectionHeading } from "../common";
 
 const KeyFeatures = () => {

@@ -10,9 +10,7 @@ import {
   Bell,
   ChevronDown,
   CheckCircle2,
-  Clock,
   ArrowRight,
-  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 

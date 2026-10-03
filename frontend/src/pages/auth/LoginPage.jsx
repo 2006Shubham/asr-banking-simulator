@@ -10,7 +10,6 @@ import {
   EyeOff,
   CheckCircle2,
   Info,
-  ArrowRight,
   ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -294,7 +293,7 @@ const LoginPage = () => {
 
       {/* Mini Footer */}
       <footer className="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white">
-        © {new Date().getFullYear()} ASR Bank Simulator. All rights reserved.
+        © 2026 ASR Bank Simulator. All rights reserved.
       </footer>
 
       {/* Forgot Password Modal */}

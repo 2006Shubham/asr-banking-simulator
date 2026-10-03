@@ -1,29 +1,60 @@
 /**
- * ASR Bank - Central Mock Data Store
- * Mirrors the 10 Database Entities of the ASR Bank DBMS Mini-Project.
- * Later, this structure will match Spring Boot REST API DTO responses directly.
+ * ASR Bank - Centralized Mock Data Store
+ * ============================================================================
+ * This file serves as the single source of truth for all mock data in the frontend.
+ * It strictly mirrors the 10 Database Entities of the ASR Bank relational schema:
+ *
+ *   1.  USER             (usr_id, user_name, role, contact_no)
+ *   2.  CUSTOMER         (cust_id, user_id, name, phone, email, address, aadhar_no)
+ *   3.  ACCOUNT          (acc_no, cust_id, acc_type, balance, open_date, status)
+ *   4.  TRANSACTION      (txn_id, acc_no, txn_type, txn_date, amount, channel, status, ref_no, description)
+ *   5.  LOAN             (loan_id, cust_id, loan_type, amount, interest_rate, start_date, tenure, status)
+ *   6.  LOAN_INSTALLMENT (installment_id, loan_id, installment_no, due_date, amount, paid_on, status)
+ *   7.  FIXED_DEPOSIT    (fd_id, cust_id, amount, interest_rate, start_date, maturity_date, status)
+ *   8.  FD_INTEREST      (interest_id, fd_id, interest_amount, calc_date, payout_date, status)
+ *   9.  CARD             (card_no, cust_id, acc_no, card_type, issue_date, expiry_date, cvv, status)
+ *   10. KYC              (kyc_id, cust_id, kyc_type, doc_details, verified_on, verified_by, status)
+ *
+ * Relational Integrity Constraints Verified:
+ *   - CUSTOMER.userId        -> USER.userId           (USR001)
+ *   - ACCOUNT.custId         -> CUSTOMER.custId       (CUST001)
+ *   - TRANSACTION.accNo      -> ACCOUNT.accNo         (ACC001, ACC002)
+ *   - LOAN.custId            -> CUSTOMER.custId       (CUST001)
+ *   - LOAN_INSTALLMENT.loanId-> LOAN.loanId           (LN001, LN002)
+ *   - FIXED_DEPOSIT.custId   -> CUSTOMER.custId       (CUST001)
+ *   - FD_INTEREST.fdId       -> FIXED_DEPOSIT.fdId    (FD001, FD002)
+ *   - CARD.custId            -> CUSTOMER.custId       (CUST001)
+ *   - CARD.accNo             -> ACCOUNT.accNo (or null)(ACC001, ACC002)
+ *   - KYC.custId             -> CUSTOMER.custId       (CUST001)
+ * ============================================================================
  */
 
-// 1. USER
+// ============================================================================
+// 1. USER ENTITY (Authentication & Role Credentials)
+// ============================================================================
 export const mockUser = {
   userId: "USR001",
   userName: "suraj_w",
   role: "Customer",
-  contactNo: "9876543210",
+  contactNo: "+91 98765 43210",
 };
 
-// 2. CUSTOMER
+// ============================================================================
+// 2. CUSTOMER ENTITY (Personal Demographics & Master Records)
+// ============================================================================
 export const mockCustomer = {
   custId: "CUST001",
   userId: "USR001",
-  name: "Suraj W",
-  phone: "9876543210",
+  name: "Suraj Walke",
+  phone: "+91 98765 43210",
   email: "suraj@example.com",
-  address: "Shivajinagar, Pune, Maharashtra",
+  address: "Flat 402, Shivajinagar, Pune, Maharashtra - 411005",
   aadharNo: "1234-5678-9012",
 };
 
-// 3. ACCOUNT
+// ============================================================================
+// 3. ACCOUNT ENTITY (Deposit Accounts)
+// ============================================================================
 export const mockAccounts = [
   {
     accNo: "ACC001",
@@ -43,7 +74,9 @@ export const mockAccounts = [
   },
 ];
 
-// 4. TRANSACTION
+// ============================================================================
+// 4. TRANSACTION ENTITY (Account Audit Ledger & Payment Journals)
+// ============================================================================
 export const mockTransactions = [
   {
     txnId: "TXN001",
@@ -157,7 +190,9 @@ export const mockTransactions = [
   },
 ];
 
-// 5. LOAN
+// ============================================================================
+// 5. LOAN ENTITY (Sanctioned Retail Facilities)
+// ============================================================================
 export const mockLoans = [
   {
     loanId: "LN001",
@@ -181,7 +216,9 @@ export const mockLoans = [
   },
 ];
 
-// 6. LOAN_INSTALLMENT
+// ============================================================================
+// 6. LOAN_INSTALLMENT ENTITY (Amortization Schedule EMIs)
+// ============================================================================
 export const mockInstallments = [
   // LN001 Installments
   {
@@ -250,7 +287,9 @@ export const mockInstallments = [
   },
 ];
 
-// 7. FIXED_DEPOSIT
+// ============================================================================
+// 7. FIXED_DEPOSIT ENTITY (Term Deposit Contracts)
+// ============================================================================
 export const mockFDs = [
   {
     fdId: "FD001",
@@ -261,10 +300,22 @@ export const mockFDs = [
     maturityDate: "2026-03-01",
     status: "Active",
   },
+  {
+    fdId: "FD002",
+    custId: "CUST001",
+    amount: 250000.0,
+    interestRate: 7.5,
+    startDate: "2024-06-15",
+    maturityDate: "2027-06-15",
+    status: "Active",
+  },
 ];
 
-// 8. FD_INTEREST
+// ============================================================================
+// 8. FD_INTEREST ENTITY (Yield Accruals & Payout Ledger)
+// ============================================================================
 export const mockFDInterests = [
+  // FD001 Interests
   {
     interestId: "INT001",
     fdId: "FD001",
@@ -273,9 +324,36 @@ export const mockFDInterests = [
     payoutDate: "2026-03-01",
     status: "Pending",
   },
+  // FD002 Interests
+  {
+    interestId: "INT101",
+    fdId: "FD002",
+    interestAmount: 9375.0,
+    calcDate: "2024-12-15",
+    payoutDate: "2024-12-15",
+    status: "Credited",
+  },
+  {
+    interestId: "INT102",
+    fdId: "FD002",
+    interestAmount: 9375.0,
+    calcDate: "2025-06-15",
+    payoutDate: "2025-06-15",
+    status: "Credited",
+  },
+  {
+    interestId: "INT103",
+    fdId: "FD002",
+    interestAmount: 9375.0,
+    calcDate: "2025-12-15",
+    payoutDate: "2025-12-15",
+    status: "Pending",
+  },
 ];
 
-// 9. CARD
+// ============================================================================
+// 9. CARD ENTITY (Debit & Credit Cards)
+// ============================================================================
 export const mockCards = [
   {
     cardNo: "4532XXXXXXXX1234",
@@ -290,24 +368,61 @@ export const mockCards = [
   {
     cardNo: "5241XXXXXXXX5678",
     custId: "CUST001",
-    accNo: null,
+    accNo: null, // Standalone revolving credit facility
     cardType: "Credit",
     issueDate: "2024-05-10",
     expiryDate: "2028-05-10",
     cvv: "***",
     status: "Active",
   },
+  {
+    cardNo: "6071XXXXXXXX9012",
+    custId: "CUST001",
+    accNo: "ACC002",
+    cardType: "Debit",
+    issueDate: "2023-11-20",
+    expiryDate: "2026-11-20",
+    cvv: "***",
+    status: "Blocked",
+  },
 ];
 
-// 10. KYC
+// ============================================================================
+// 10. KYC ENTITY (Regulatory Compliance & Verification Audit Records)
+// ============================================================================
 export const mockKYC = [
   {
     kycId: "KYC001",
     custId: "CUST001",
-    kycType: "Aadhar",
-    docDetails: "Aadhar Card Verified",
+    kycType: "Aadhaar Card",
+    docDetails: "UIDAI Biometric Verified (XXXX XXXX 9012)",
     verifiedOn: "2024-01-20",
-    verifiedBy: "Admin",
+    verifiedBy: "Operations Admin",
+    status: "Verified",
+  },
+  {
+    kycId: "KYC002",
+    custId: "CUST001",
+    kycType: "PAN Card",
+    docDetails: "NSDL Verified (ABCDE••••F)",
+    verifiedOn: "2024-01-22",
+    verifiedBy: "Compliance Officer",
     status: "Verified",
   },
 ];
+
+// ============================================================================
+// DEFAULT EXPORT (All 10 Relational Data Collections)
+// ============================================================================
+export default {
+  mockUser,
+  mockCustomer,
+  mockAccounts,
+  mockTransactions,
+  mockLoans,
+  mockInstallments,
+  mockFDs,
+  mockFDInterests,
+  mockCards,
+  mockKYC,
+};
