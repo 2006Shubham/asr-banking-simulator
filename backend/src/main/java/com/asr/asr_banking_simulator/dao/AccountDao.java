@@ -9,6 +9,8 @@ import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.dto.CustomerSecurityAuditDto;
 import com.asr.asr_banking_simulator.dto.CustomerTierDto;
 import com.asr.asr_banking_simulator.dto.FdMaturityQuoteDto;
+import com.asr.asr_banking_simulator.dto.RolePrivilegeDto;
+import com.asr.asr_banking_simulator.dto.SqlInjectionDemoDto;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.model.Customer;
 import org.springframework.stereotype.Repository;
@@ -20,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -831,6 +834,159 @@ public class AccountDao {
         } catch (SQLException e) {
             throw new RuntimeException("Database error executing batch cursor procedure sp_batch_accrue_monthly_interest: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * STAGE 13: SQL INJECTION VULNERABILITY SIMULATION (Dynamic SQL Concatenation)
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Demonstrates how raw string concatenation inside java.sql.Statement allows
+     * an attacker to alter the query's Abstract Syntax Tree (AST).
+     *
+     * Example Attack:
+     * Passing payload: "' OR '1'='1"
+     * Produces: "SELECT ... WHERE acc_no = '' OR '1'='1'"
+     * Result: Evaluates to a mathematical tautology (TRUE), exposing ALL customer accounts!
+     * ============================================================================
+     */
+    public SqlInjectionDemoDto simulateSqlInjectionVulnerability(String payload) {
+        String unsafeSql = "SELECT acc_no, cust_id, branch_id, acc_type, balance, status "
+                         + "FROM accounts "
+                         + "WHERE acc_no = '" + payload + "'";
+
+        List<Account> accounts = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(unsafeSql)) {
+
+            while (rs.next()) {
+                Account acc = new Account();
+                acc.setAccNo(rs.getString("acc_no"));
+                acc.setCustId(rs.getString("cust_id"));
+                acc.setBranchId(rs.getString("branch_id"));
+                acc.setAccType(rs.getString("acc_type"));
+                acc.setBalance(rs.getBigDecimal("balance"));
+                acc.setStatus(rs.getString("status"));
+                accounts.add(acc);
+            }
+
+            String status = accounts.size() > 1 ? "EXPLOITED_UNAUTHORIZED_DATA_ACCESS" : "SINGLE_OR_EMPTY_ROW";
+            String explanation = "Dynamic concatenation altered the query AST. The condition '" + payload
+                               + "' caused the WHERE clause to evaluate to TRUE, exposing " + accounts.size() + " accounts without authorization.";
+
+            return new SqlInjectionDemoDto(
+                    "VULNERABLE_DYNAMIC_CONCATENATION",
+                    unsafeSql,
+                    payload,
+                    accounts.size(),
+                    accounts,
+                    status,
+                    explanation
+            );
+
+        } catch (SQLException e) {
+            return new SqlInjectionDemoDto(
+                    "VULNERABLE_DYNAMIC_CONCATENATION",
+                    unsafeSql,
+                    payload,
+                    0,
+                    List.of(),
+                    "SQL_SYNTAX_ERROR_TRIGGERED",
+                    "The injected characters caused a database syntax error: " + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * STAGE 13: SQL INJECTION DEFENSE VIA PARAMETERIZED PreparedStatement
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Demonstrates how JDBC PreparedStatement parameter binding neutralizes SQLi.
+     * The query structure is compiled with placeholders ('?'). The input is sent
+     * over the binary protocol as pure literal data, preventing syntax alteration.
+     * ============================================================================
+     */
+    public SqlInjectionDemoDto simulatePreparedStatementDefense(String payload) {
+        String secureSql = "SELECT acc_no, cust_id, branch_id, acc_type, balance, status "
+                         + "FROM accounts "
+                         + "WHERE acc_no = ?";
+
+        List<Account> accounts = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(secureSql)) {
+
+            // Bind payload as literal string value
+            ps.setString(1, payload);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Account acc = new Account();
+                    acc.setAccNo(rs.getString("acc_no"));
+                    acc.setCustId(rs.getString("cust_id"));
+                    acc.setBranchId(rs.getString("branch_id"));
+                    acc.setAccType(rs.getString("acc_type"));
+                    acc.setBalance(rs.getBigDecimal("balance"));
+                    acc.setStatus(rs.getString("status"));
+                    accounts.add(acc);
+                }
+            }
+
+            String status = "SAFE_ATTACK_NEUTRALIZED";
+            String explanation = "PreparedStatement treated '" + payload + "' strictly as literal string data. "
+                               + "The query structure was precompiled, rendering SQL syntax alteration impossible. Returned " + accounts.size() + " rows.";
+
+            return new SqlInjectionDemoDto(
+                    "SECURE_PARAMETERIZED_PREPAREDSTATEMENT",
+                    secureSql + " [Bound Param: " + payload + "]",
+                    payload,
+                    accounts.size(),
+                    accounts,
+                    status,
+                    explanation
+            );
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error in PreparedStatement execution: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * STAGE 13: RBAC CATALOG PRIVILEGES QUERY
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Retrieves table-level privileges granted to database roles from
+     * information_schema.TABLE_PRIVILEGES, proving Principle of Least Privilege (PoLP).
+     * ============================================================================
+     */
+    public List<RolePrivilegeDto> findActiveRolePrivileges() {
+        String sql = "SELECT GRANTEE, TABLE_SCHEMA, TABLE_NAME, PRIVILEGE_TYPE "
+                   + "FROM information_schema.TABLE_PRIVILEGES "
+                   + "WHERE TABLE_SCHEMA = 'asr_banking' AND GRANTEE LIKE '%role%' "
+                   + "ORDER BY GRANTEE, TABLE_NAME";
+
+        List<RolePrivilegeDto> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                RolePrivilegeDto dto = new RolePrivilegeDto(
+                        rs.getString("GRANTEE"),
+                        rs.getString("TABLE_SCHEMA"),
+                        rs.getString("TABLE_NAME"),
+                        rs.getString("PRIVILEGE_TYPE")
+                );
+                list.add(dto);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findActiveRolePrivileges: " + e.getMessage(), e);
+        }
+
+        return list;
     }
 }
 
