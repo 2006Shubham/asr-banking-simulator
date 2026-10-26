@@ -2,6 +2,7 @@ package com.asr.asr_banking_simulator.dao;
 
 import com.asr.asr_banking_simulator.dto.AccountBalanceAuditDto;
 import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
+import com.asr.asr_banking_simulator.dto.BatchInterestResultDto;
 import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
@@ -14,10 +15,12 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -788,6 +791,46 @@ public class AccountDao {
         }
 
         return list;
+    }
+
+    /**
+     * STAGE 12: BATCH CURSOR EXECUTION VIA JDBC CallableStatement
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Invokes the MySQL stored procedure `sp_batch_accrue_monthly_interest`,
+     * which iterates through qualifying savings accounts using a database cursor,
+     * calculates interest, credits balances, writes ledger transactions, and
+     * activates the Stage 11 audit trigger.
+     * ============================================================================
+     */
+    public BatchInterestResultDto runMonthlyInterestBatch(BigDecimal annualRate) {
+        String sql = "{CALL sp_batch_accrue_monthly_interest(?, ?, ?, ?, ?)}";
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            // Bind IN parameter (1)
+            cs.setBigDecimal(1, annualRate);
+
+            // Register OUT parameters (2 to 5)
+            cs.registerOutParameter(2, Types.INTEGER);
+            cs.registerOutParameter(3, Types.DECIMAL);
+            cs.registerOutParameter(4, Types.VARCHAR);
+            cs.registerOutParameter(5, Types.VARCHAR);
+
+            // Execute batch procedure
+            cs.execute();
+
+            int accountsProcessed = cs.getInt(2);
+            BigDecimal totalDisbursed = cs.getBigDecimal(3);
+            String statusCode = cs.getString(4);
+            String statusMessage = cs.getString(5);
+
+            return new BatchInterestResultDto(accountsProcessed, totalDisbursed, annualRate, statusCode, statusMessage);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing batch cursor procedure sp_batch_accrue_monthly_interest: " + e.getMessage(), e);
+        }
     }
 }
 

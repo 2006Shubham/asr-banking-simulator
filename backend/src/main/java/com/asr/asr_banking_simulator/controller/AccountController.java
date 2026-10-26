@@ -206,4 +206,19 @@ public class AccountController {
     public ResponseEntity<List<com.asr.asr_banking_simulator.dto.AccountBalanceAuditDto>> getAccountAuditTrail(@PathVariable String accNo) {
         return ResponseEntity.ok(accountDao.findBalanceAuditTrail(accNo));
     }
+
+    /**
+     * STAGE 12: DATABASE CURSOR BATCH PROCESSING — MONTHLY INTEREST ACCRUAL
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Executes the stored procedure `sp_batch_accrue_monthly_interest`, which
+     * uses a MySQL database cursor to iterate over active savings accounts,
+     * calculate monthly interest, credit accounts, and log ledger transactions.
+     * ============================================================================
+     */
+    @PostMapping("/batch/monthly-interest")
+    public ResponseEntity<com.asr.asr_banking_simulator.dto.BatchInterestResultDto> triggerMonthlyInterestBatch(
+            @RequestParam(defaultValue = "4.00") BigDecimal annualRate) {
+        return ResponseEntity.ok(accountDao.runMonthlyInterestBatch(annualRate));
+    }
 }
