@@ -1,9 +1,11 @@
 package com.asr.asr_banking_simulator.dao;
 
+import com.asr.asr_banking_simulator.dto.AccountBalanceAuditDto;
 import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
+import com.asr.asr_banking_simulator.dto.CustomerSecurityAuditDto;
 import com.asr.asr_banking_simulator.dto.CustomerTierDto;
 import com.asr.asr_banking_simulator.dto.FdMaturityQuoteDto;
 import com.asr.asr_banking_simulator.model.Account;
@@ -689,6 +691,103 @@ public class AccountDao {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * STAGE 11: DATABASE TRIGGER AUDIT TRAIL QUERY
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Retrieves the immutable balance audit log generated automatically by the
+     * MySQL AFTER UPDATE trigger `trg_accounts_after_update`.
+     * Demonstrates how the database engine guarantees non-repudiable audit logging
+     * even when mutations occur outside application logic.
+     * ============================================================================
+     */
+    public List<AccountBalanceAuditDto> findBalanceAuditTrail(String accNo) {
+        String sql = "SELECT audit_id, acc_no, old_balance, new_balance, delta_amount, "
+                   + "change_type, old_status, new_status, changed_at, db_user, trigger_event "
+                   + "FROM account_balance_audit_log "
+                   + "WHERE acc_no = ? "
+                   + "ORDER BY changed_at DESC";
+
+        List<AccountBalanceAuditDto> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, accNo);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    AccountBalanceAuditDto dto = new AccountBalanceAuditDto();
+                    dto.setAuditId(rs.getLong("audit_id"));
+                    dto.setAccNo(rs.getString("acc_no"));
+                    dto.setOldBalance(rs.getBigDecimal("old_balance"));
+                    dto.setNewBalance(rs.getBigDecimal("new_balance"));
+                    dto.setDeltaAmount(rs.getBigDecimal("delta_amount"));
+                    dto.setChangeType(rs.getString("change_type"));
+                    dto.setOldStatus(rs.getString("old_status"));
+                    dto.setNewStatus(rs.getString("new_status"));
+                    java.sql.Timestamp ts = rs.getTimestamp("changed_at");
+                    if (ts != null) {
+                        dto.setChangedAt(ts.toLocalDateTime());
+                    }
+                    dto.setDbUser(rs.getString("db_user"));
+                    dto.setTriggerEvent(rs.getString("trigger_event"));
+                    list.add(dto);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findBalanceAuditTrail: " + e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    /**
+     * STAGE 11: CUSTOMER SECURITY AUDIT LOG QUERY
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Retrieves the PII and contact modification history captured automatically by
+     * MySQL AFTER UPDATE trigger `trg_customers_after_update`.
+     * ============================================================================
+     */
+    public List<CustomerSecurityAuditDto> findCustomerSecurityAudit(String custId) {
+        String sql = "SELECT log_id, cust_id, field_name, old_value, new_value, changed_at, db_user "
+                   + "FROM customer_security_audit_log "
+                   + "WHERE cust_id = ? "
+                   + "ORDER BY changed_at DESC";
+
+        List<CustomerSecurityAuditDto> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, custId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    CustomerSecurityAuditDto dto = new CustomerSecurityAuditDto();
+                    dto.setLogId(rs.getLong("log_id"));
+                    dto.setCustId(rs.getString("cust_id"));
+                    dto.setFieldName(rs.getString("field_name"));
+                    dto.setOldValue(rs.getString("old_value"));
+                    dto.setNewValue(rs.getString("new_value"));
+                    java.sql.Timestamp ts = rs.getTimestamp("changed_at");
+                    if (ts != null) {
+                        dto.setChangedAt(ts.toLocalDateTime());
+                    }
+                    dto.setDbUser(rs.getString("db_user"));
+                    list.add(dto);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findCustomerSecurityAudit: " + e.getMessage(), e);
+        }
+
+        return list;
     }
 }
 

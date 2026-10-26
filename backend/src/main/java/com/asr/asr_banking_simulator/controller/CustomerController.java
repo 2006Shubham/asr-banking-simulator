@@ -17,10 +17,12 @@ public class CustomerController {
 
     private final CustomerRepository customerRepo;
     private final KycRepository kycRepo;
+    private final com.asr.asr_banking_simulator.dao.AccountDao accountDao;
 
-    public CustomerController(CustomerRepository customerRepo, KycRepository kycRepo) {
+    public CustomerController(CustomerRepository customerRepo, KycRepository kycRepo, com.asr.asr_banking_simulator.dao.AccountDao accountDao) {
         this.customerRepo = customerRepo;
         this.kycRepo = kycRepo;
+        this.accountDao = accountDao;
     }
 
     @GetMapping
@@ -49,5 +51,18 @@ public class CustomerController {
             Customer saved = customerRepo.save(existing);
             return ResponseEntity.ok(saved);
         }).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * STAGE 11: DATABASE TRIGGER CUSTOMER SECURITY AUDIT LOG
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Exposes PII security modifications captured automatically by the
+     * MySQL AFTER UPDATE trigger `trg_customers_after_update`.
+     * ============================================================================
+     */
+    @GetMapping("/{custId}/security-audit")
+    public List<com.asr.asr_banking_simulator.dto.CustomerSecurityAuditDto> getCustomerSecurityAudit(@PathVariable String custId) {
+        return accountDao.findCustomerSecurityAudit(custId);
     }
 }

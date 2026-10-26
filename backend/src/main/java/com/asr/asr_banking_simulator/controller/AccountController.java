@@ -193,4 +193,17 @@ public class AccountController {
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    /**
+     * STAGE 11: DATABASE TRIGGER BALANCE AUDIT TRAIL
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Exposes the immutable balance audit log generated automatically by the
+     * MySQL AFTER UPDATE trigger `trg_accounts_after_update`.
+     * ============================================================================
+     */
+    @GetMapping("/{accNo}/audit-trail")
+    public ResponseEntity<List<com.asr.asr_banking_simulator.dto.AccountBalanceAuditDto>> getAccountAuditTrail(@PathVariable String accNo) {
+        return ResponseEntity.ok(accountDao.findBalanceAuditTrail(accNo));
+    }
 }
