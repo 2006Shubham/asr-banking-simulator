@@ -36,6 +36,22 @@ export const cardService = {
     const response = await api.get("/api/cards");
     return response.data;
   },
+
+  /**
+   * Update card status (Active / Blocked)
+   * @param {string} cardNo
+   * @param {string} status
+   */
+  updateCardStatus: async (cardNo, status) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const card = mockCards.find((c) => c.cardNo === cardNo);
+      if (card) card.status = status;
+      return { cardNo, status };
+    }
+    const response = await api.patch(`/api/cards/${cardNo}/status`, { status });
+    return response.data;
+  },
 };
 
 export default cardService;

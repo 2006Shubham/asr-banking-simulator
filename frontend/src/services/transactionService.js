@@ -29,6 +29,28 @@ export const transactionService = {
     const response = await api.get(endpoint);
     return response.data;
   },
+
+  /**
+   * Execute an atomic fund transfer
+   */
+  executeTransfer: async ({ fromAccNo, toAccNo, amount, channel, description, beneficiary }) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return {
+        ref: `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date().toLocaleString("en-IN"),
+      };
+    }
+    const response = await api.post("/api/transactions/transfer", {
+      fromAccNo,
+      toAccNo,
+      amount: parseFloat(amount),
+      channel,
+      description,
+      beneficiary,
+    });
+    return response.data;
+  },
 };
 
 export default transactionService;

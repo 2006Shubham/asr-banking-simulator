@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import accountService from "../../services/accountService";
+import transactionService from "../../services/transactionService";
 import { formatCurrency } from "../../utils/formatters";
 import { maskAccountNumber } from "../../utils/maskers";
 import { AccountCard } from "../../components/accounts";
@@ -53,14 +54,31 @@ const AccountsPage = () => {
     setTransferModalOpen(true);
   };
 
-  const handleExecuteTransfer = (e) => {
+  const handleExecuteTransfer = async (e) => {
     e.preventDefault();
     if (!transferBeneficiary || !transferAmount) return;
-    setTransferReceipt({
-      ref: `TXN${Math.floor(100000 + Math.random() * 900000)}`,
-      date: new Date().toLocaleString("en-IN"),
-    });
-    setTransferSuccess(true);
+    try {
+      const res = await transactionService.executeTransfer({
+        fromAccNo: selectedAccNo,
+        toAccNo: null,
+        amount: transferAmount,
+        channel: transferChannel,
+        description: `Fund Transfer to ${transferBeneficiary}`,
+        beneficiary: transferBeneficiary,
+      });
+
+      setTransferReceipt({
+        ref: res.transaction?.refNo || res.ref || `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+        date: new Date().toLocaleString("en-IN"),
+      });
+      setTransferSuccess(true);
+
+      // Refresh accounts to reflect newly deducted balance from MySQL
+      const updatedAccounts = await accountService.getAccountsByCustomer(customer?.custId || "CUST001");
+      setAccounts(updatedAccounts);
+    } catch (err) {
+      console.error("Transfer failed", err);
+    }
   };
 
   if (loading) {

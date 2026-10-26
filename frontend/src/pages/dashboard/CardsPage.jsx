@@ -36,10 +36,15 @@ const CardsPage = () => {
     fetchCards();
   }, [customer]);
 
-  const handleCardStatusChange = (cardNo, newStatus) => {
-    setCards((prev) =>
-      prev.map((c) => (c.cardNo === cardNo ? { ...c, status: newStatus } : c))
-    );
+  const handleCardStatusChange = async (cardNo, newStatus) => {
+    try {
+      await cardService.updateCardStatus(cardNo, newStatus);
+      setCards((prev) =>
+        prev.map((c) => (c.cardNo === cardNo ? { ...c, status: newStatus } : c))
+      );
+    } catch (err) {
+      console.error("Failed to update card status in backend", err);
+    }
   };
 
   const filteredCards = cards.filter((c) => {
