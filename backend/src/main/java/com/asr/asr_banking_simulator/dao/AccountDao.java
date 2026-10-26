@@ -1,5 +1,6 @@
 package com.asr.asr_banking_simulator.dao;
 
+import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.model.Account;
 import org.springframework.stereotype.Repository;
 
@@ -62,11 +63,13 @@ public class AccountDao {
      * @return List of matching Account objects
      */
     public List<Account> findAccountsByCustomerId(String custId) {
-        // 1. Define the explicit SQL query string
-        String sql = "SELECT acc_no, cust_id, branch_id, acc_type, balance, open_date, status "
-                   + "FROM accounts "
-                   + "WHERE cust_id = ? "
-                   + "ORDER BY acc_no ASC";
+        // 1. Define the SQL query using INNER JOIN to fetch branch details
+        String sql = "SELECT a.acc_no, a.cust_id, a.branch_id, a.acc_type, a.balance, a.open_date, a.status, "
+                   + "       b.branch_name, b.ifsc_code "
+                   + "FROM accounts a "
+                   + "INNER JOIN branches b ON a.branch_id = b.branch_id "
+                   + "WHERE a.cust_id = ? "
+                   + "ORDER BY a.acc_no ASC";
 
         List<Account> accounts = new ArrayList<>();
 
@@ -285,6 +288,103 @@ public class AccountDao {
         }
 
         account.setStatus(rs.getString("status"));
+
+        try {
+            account.setBranchName(rs.getString("branch_name"));
+            account.setIfscCode(rs.getString("ifsc_code"));
+        } catch (SQLException ignored) {
+            // Optional: Columns might not be in queries that do not join with branches
+        }
+
         return account;
+    }
+
+    /**
+     * MULTI-TABLE JOIN: 3-Table SQL INNER JOIN across customers, accounts, and branches.
+     *
+     * SQL Query:
+     *   SELECT 
+     *       c.cust_id,
+     *       c.name AS customer_name,
+     *       c.email AS customer_email,
+     *       c.phone AS customer_phone,
+     *       a.acc_no,
+     *       a.acc_type,
+     *       a.balance,
+     *       a.open_date,
+     *       a.status AS account_status,
+     *       b.branch_id,
+     *       b.branch_name,
+     *       b.ifsc_code,
+     *       b.city AS branch_city
+     *   FROM customers c
+     *   INNER JOIN accounts a ON c.cust_id = a.cust_id
+     *   INNER JOIN branches b ON a.branch_id = b.branch_id
+     *   WHERE c.cust_id = ?
+     *   ORDER BY a.acc_no ASC;
+     *
+     * Educational Concept:
+     * Demonstrates joining 3 normalized tables:
+     *   customers (1) ──── (N) accounts (N) ──── (1) branches
+     */
+    public List<CustomerAccountBranchDto> findCustomerAccountsWithBranch(String custId) {
+        String sql = "SELECT "
+                   + "    c.cust_id, "
+                   + "    c.name AS customer_name, "
+                   + "    c.email AS customer_email, "
+                   + "    c.phone AS customer_phone, "
+                   + "    a.acc_no, "
+                   + "    a.acc_type, "
+                   + "    a.balance, "
+                   + "    a.open_date, "
+                   + "    a.status AS account_status, "
+                   + "    b.branch_id, "
+                   + "    b.branch_name, "
+                   + "    b.ifsc_code, "
+                   + "    b.city AS branch_city "
+                   + "FROM customers c "
+                   + "INNER JOIN accounts a ON c.cust_id = a.cust_id "
+                   + "INNER JOIN branches b ON a.branch_id = b.branch_id "
+                   + "WHERE c.cust_id = ? "
+                   + "ORDER BY a.acc_no ASC";
+
+        List<CustomerAccountBranchDto> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, custId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    CustomerAccountBranchDto dto = new CustomerAccountBranchDto();
+                    dto.setCustId(rs.getString("cust_id"));
+                    dto.setCustomerName(rs.getString("customer_name"));
+                    dto.setCustomerEmail(rs.getString("customer_email"));
+                    dto.setCustomerPhone(rs.getString("customer_phone"));
+
+                    dto.setAccNo(rs.getString("acc_no"));
+                    dto.setAccType(rs.getString("acc_type"));
+                    dto.setBalance(rs.getBigDecimal("balance"));
+                    java.sql.Date openDate = rs.getDate("open_date");
+                    if (openDate != null) {
+                        dto.setOpenDate(openDate.toLocalDate());
+                    }
+                    dto.setAccountStatus(rs.getString("account_status"));
+
+                    dto.setBranchId(rs.getString("branch_id"));
+                    dto.setBranchName(rs.getString("branch_name"));
+                    dto.setIfscCode(rs.getString("ifsc_code"));
+                    dto.setBranchCity(rs.getString("branch_city"));
+
+                    list.add(dto);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findCustomerAccountsWithBranch: " + e.getMessage(), e);
+        }
+
+        return list;
     }
 }

@@ -106,9 +106,9 @@ const AccountCard = ({ account, onTransferClick }) => {
           </div>
 
           <div>
-            <span className="text-[10px] text-slate-400 block uppercase">IFSC Code</span>
-            <span className="font-mono font-semibold text-slate-800 mt-0.5 block">
-              ASRB0000101
+            <span className="text-[10px] text-slate-400 block uppercase">Branch & IFSC</span>
+            <span className="font-mono font-semibold text-slate-800 mt-0.5 block truncate text-[11px]" title={`${account.branchName || "Pune FC Road"} (${account.ifscCode || "ASRB0000101"})`}>
+              {account.ifscCode || "ASRB0000101"} • {account.branchName ? account.branchName.replace(" Branch", "") : "Pune Main"}
             </span>
           </div>
         </div>

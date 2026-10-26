@@ -1,6 +1,7 @@
 package com.asr.asr_banking_simulator.controller;
 
 import com.asr.asr_banking_simulator.dao.AccountDao;
+import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.StatusUpdateRequest;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.repository.AccountRepository;
@@ -34,6 +35,15 @@ public class AccountController {
     @GetMapping("/customer/{custId}")
     public List<Account> getAccountsByCustomer(@PathVariable String custId) {
         return accountDao.findAccountsByCustomerId(custId);
+    }
+
+    /**
+     * MULTI-TABLE JOIN: Retrieves accounts joined with customer details and branch details.
+     * Uses 3-Table SQL INNER JOIN executed via JDBC in AccountDao.
+     */
+    @GetMapping("/customer/{custId}/details")
+    public List<CustomerAccountBranchDto> getCustomerAccountsWithBranch(@PathVariable String custId) {
+        return accountDao.findCustomerAccountsWithBranch(custId);
     }
 
     /**
