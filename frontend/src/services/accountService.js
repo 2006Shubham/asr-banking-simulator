@@ -45,6 +45,32 @@ export const accountService = {
     const response = await api.get(`/api/accounts/${accNo}`);
     return response.data;
   },
+
+  /**
+   * STAGE 4: Get aggregated customer portfolio summary computed via SQL GROUP BY & SUM()
+   * @param {string} custId
+   */
+  getCustomerPortfolioSummary: async (custId = "CUST001") => {
+    if (USE_MOCK) {
+      return { custId, totalAccounts: 2, totalBalance: 165000.5, avgBalance: 82500.25 };
+    }
+    const response = await api.get(`/api/accounts/customer/${custId}/summary`);
+    return response.data;
+  },
+
+  /**
+   * STAGE 4: Get bank-wide liquidity aggregated by account type via SQL GROUP BY acc_type
+   */
+  getAccountTypeSummary: async () => {
+    if (USE_MOCK) {
+      return [
+        { accType: "Current", accountCount: 1, totalBalance: 121000.0, avgBalance: 121000.0 },
+        { accType: "Savings", accountCount: 2, totalBalance: 112500.5, avgBalance: 56250.25 },
+      ];
+    }
+    const response = await api.get("/api/accounts/summary/by-type");
+    return response.data;
+  },
 };
 
 export default accountService;

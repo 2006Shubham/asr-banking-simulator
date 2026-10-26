@@ -1,7 +1,9 @@
 package com.asr.asr_banking_simulator.controller;
 
 import com.asr.asr_banking_simulator.dao.AccountDao;
+import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
+import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.dto.StatusUpdateRequest;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.repository.AccountRepository;
@@ -44,6 +46,26 @@ public class AccountController {
     @GetMapping("/customer/{custId}/details")
     public List<CustomerAccountBranchDto> getCustomerAccountsWithBranch(@PathVariable String custId) {
         return accountDao.findCustomerAccountsWithBranch(custId);
+    }
+
+    /**
+     * STAGE 4 AGGREGATION: Retrieves summary statistics grouped by account type (Savings vs Current).
+     * Uses SQL GROUP BY + COUNT + SUM + AVG + MIN + MAX executed via JDBC.
+     */
+    @GetMapping("/summary/by-type")
+    public List<AccountTypeSummaryDto> getAccountTypeSummary() {
+        return accountDao.getAccountTypeSummary();
+    }
+
+    /**
+     * STAGE 4 AGGREGATION: Retrieves customer portfolio aggregate metrics.
+     * Uses SQL LEFT JOIN + GROUP BY + COALESCE executed via JDBC.
+     */
+    @GetMapping("/customer/{custId}/summary")
+    public ResponseEntity<CustomerPortfolioSummaryDto> getCustomerPortfolioSummary(@PathVariable String custId) {
+        return accountDao.getCustomerPortfolioSummary(custId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**

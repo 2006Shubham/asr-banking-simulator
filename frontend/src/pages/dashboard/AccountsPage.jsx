@@ -17,6 +17,8 @@ const AccountsPage = () => {
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [portfolioSummary, setPortfolioSummary] = useState(null);
+
   // Transfer simulation modal state
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [selectedAccNo, setSelectedAccNo] = useState("");
@@ -30,8 +32,13 @@ const AccountsPage = () => {
     const fetchAccounts = async () => {
       try {
         setLoading(true);
-        const data = await accountService.getAccountsByCustomer(customer?.custId || "CUST001");
+        const custId = customer?.custId || "CUST001";
+        const [data, summary] = await Promise.all([
+          accountService.getAccountsByCustomer(custId),
+          accountService.getCustomerPortfolioSummary(custId).catch(() => null),
+        ]);
         setAccounts(data);
+        setPortfolioSummary(summary);
         if (data.length > 0) {
           setSelectedAccNo(data[0].accNo);
         }
@@ -45,7 +52,9 @@ const AccountsPage = () => {
     fetchAccounts();
   }, [customer]);
 
-  const totalBalance = accounts.reduce((sum, a) => sum + (a.balance || 0), 0);
+  const totalBalance = portfolioSummary?.totalBalance != null
+    ? portfolioSummary.totalBalance
+    : accounts.reduce((sum, a) => sum + (a.balance || 0), 0);
 
   const handleOpenTransfer = (accNo) => {
     setSelectedAccNo(accNo || accounts[0]?.accNo || "");
@@ -117,10 +126,17 @@ const AccountsPage = () => {
           <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono mt-0.5 tracking-tight">
             {formatCurrency(totalBalance)}
           </p>
-          <span className="text-[11px] text-emerald-700 font-medium flex items-center gap-1 mt-1">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Available for instantaneous transfer</span>
-          </span>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Instant transfer ready</span>
+            </span>
+            {portfolioSummary?.avgBalance != null && (
+              <span className="text-[11px] text-slate-500 font-medium border-l border-slate-200 pl-2">
+                Avg: <span className="font-mono text-slate-700">{formatCurrency(portfolioSummary.avgBalance)}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="border-t sm:border-t-0 sm:border-l border-slate-100 sm:pl-6">

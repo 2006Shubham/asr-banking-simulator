@@ -1,6 +1,8 @@
 package com.asr.asr_banking_simulator.dao;
 
+import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
+import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.model.Account;
 import org.springframework.stereotype.Repository;
 
@@ -386,5 +388,106 @@ public class AccountDao {
         }
 
         return list;
+    }
+
+    /**
+     * STAGE 4: AGGREGATE QUERY WITH GROUP BY
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Computes summary metrics grouped by account type (Savings vs Current):
+     *   - COUNT(*) accounts
+     *   - SUM(balance) total deposits
+     *   - AVG(balance) average balance
+     *   - MIN(balance) / MAX(balance)
+     *
+     * Relational Algebra:
+     *   γ_{acc_type}, COUNT(*), SUM(balance), AVG(balance), MIN(balance), MAX(balance)(σ_{status='Active'}(accounts))
+     * ============================================================================
+     */
+    public List<AccountTypeSummaryDto> getAccountTypeSummary() {
+        String sql = "SELECT "
+                   + "    acc_type, "
+                   + "    COUNT(*) AS account_count, "
+                   + "    SUM(balance) AS total_balance, "
+                   + "    ROUND(AVG(balance), 2) AS avg_balance, "
+                   + "    MIN(balance) AS min_balance, "
+                   + "    MAX(balance) AS max_balance "
+                   + "FROM accounts "
+                   + "WHERE status = 'Active' "
+                   + "GROUP BY acc_type "
+                   + "ORDER BY total_balance DESC";
+
+        List<AccountTypeSummaryDto> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                AccountTypeSummaryDto dto = new AccountTypeSummaryDto();
+                dto.setAccType(rs.getString("acc_type"));
+                dto.setAccountCount(rs.getLong("account_count"));
+                dto.setTotalBalance(rs.getBigDecimal("total_balance"));
+                dto.setAvgBalance(rs.getBigDecimal("avg_balance"));
+                dto.setMinBalance(rs.getBigDecimal("min_balance"));
+                dto.setMaxBalance(rs.getBigDecimal("max_balance"));
+                list.add(dto);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing getAccountTypeSummary: " + e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    /**
+     * STAGE 4: JOIN + GROUP BY + COALESCE
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Aggregates a specific customer's accounts to calculate portfolio totals:
+     *   - Total count of active accounts
+     *   - Cumulative balance
+     *   - Average balance
+     *
+     * Notice:
+     *   Uses COALESCE(SUM(a.balance), 0.00) so that if a customer has no active
+     *   accounts, MySQL returns 0.00 rather than NULL.
+     * ============================================================================
+     */
+    public Optional<CustomerPortfolioSummaryDto> getCustomerPortfolioSummary(String custId) {
+        String sql = "SELECT "
+                   + "    c.cust_id, "
+                   + "    c.name AS customer_name, "
+                   + "    COUNT(a.acc_no) AS total_accounts, "
+                   + "    COALESCE(SUM(a.balance), 0.00) AS total_portfolio_balance, "
+                   + "    ROUND(COALESCE(AVG(a.balance), 0.00), 2) AS avg_account_balance "
+                   + "FROM customers c "
+                   + "LEFT JOIN accounts a ON c.cust_id = a.cust_id AND a.status = 'Active' "
+                   + "WHERE c.cust_id = ? "
+                   + "GROUP BY c.cust_id, c.name";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, custId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    CustomerPortfolioSummaryDto dto = new CustomerPortfolioSummaryDto();
+                    dto.setCustId(rs.getString("cust_id"));
+                    dto.setCustomerName(rs.getString("customer_name"));
+                    dto.setTotalAccounts(rs.getInt("total_accounts"));
+                    dto.setTotalBalance(rs.getBigDecimal("total_portfolio_balance"));
+                    dto.setAvgBalance(rs.getBigDecimal("avg_account_balance"));
+                    return Optional.of(dto);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing getCustomerPortfolioSummary: " + e.getMessage(), e);
+        }
+
+        return Optional.empty();
     }
 }
