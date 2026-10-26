@@ -1,5 +1,6 @@
 package com.asr.asr_banking_simulator.dao;
 
+import com.asr.asr_banking_simulator.dto.ProcedureTransferResultDto;
 import com.asr.asr_banking_simulator.dto.TransferRequest;
 import com.asr.asr_banking_simulator.model.Transaction;
 import org.springframework.stereotype.Repository;
@@ -287,4 +288,62 @@ public class TransactionDao {
 
         return list;
     }
+
+    /**
+     * STAGE 10: STORED PROCEDURE EXECUTION VIA JDBC CallableStatement
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * This method invokes the MySQL stored procedure `sp_execute_interbank_transfer`
+     * using standard JDBC java.sql.CallableStatement.
+     *
+     * Core Concepts Illustrated:
+     * 1. CallableStatement vs PreparedStatement:
+     *    CallableStatement is an extension of PreparedStatement specifically designed
+     *    for calling database stored procedures using SQL92 escape syntax:
+     *    `{CALL procedure_name(?, ?, ...)}`.
+     *
+     * 2. IN vs OUT Parameters:
+     *    - Parameters 1-4 are IN parameters (sender, receiver, amount, channel) set via cs.setXXX().
+     *    - Parameters 5-7 are OUT parameters (statusCode, statusMessage, txnRef) registered
+     *      via cs.registerOutParameter(index, java.sql.Types.VARCHAR).
+     *
+     * 3. Autonomous In-Engine ACID Management:
+     *    Unlike Stage 6 (where the Java app orchestrated setAutoCommit(false), row locks,
+     *    debit/credit updates, and rollback over multiple TCP network round-trips),
+     *    here the database engine itself manages transaction boundaries, locks,
+     *    and the SQLEXCEPTION rollback handler in a single network round-trip.
+     * ============================================================================
+     */
+    public ProcedureTransferResultDto executeTransferViaStoredProcedure(TransferRequest request) {
+        String callSql = "{CALL sp_execute_interbank_transfer(?, ?, ?, ?, ?, ?, ?)}";
+
+        try (Connection conn = dataSource.getConnection();
+             CallableStatement cs = conn.prepareCall(callSql)) {
+
+            // Bind IN parameters (1 to 4)
+            cs.setString(1, request.getFromAccNo());
+            cs.setString(2, request.getToAccNo());
+            cs.setBigDecimal(3, request.getAmount());
+            cs.setString(4, request.getChannel() != null ? request.getChannel() : "NETBANKING");
+
+            // Register OUT parameters (5 to 7)
+            cs.registerOutParameter(5, Types.VARCHAR);
+            cs.registerOutParameter(6, Types.VARCHAR);
+            cs.registerOutParameter(7, Types.VARCHAR);
+
+            // Execute the stored procedure
+            cs.execute();
+
+            // Read OUT parameters
+            String statusCode = cs.getString(5);
+            String statusMessage = cs.getString(6);
+            String txnRef = cs.getString(7);
+
+            return new ProcedureTransferResultDto(statusCode, statusMessage, txnRef);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing stored procedure sp_execute_interbank_transfer: " + e.getMessage(), e);
+        }
+    }
 }
+

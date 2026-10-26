@@ -115,5 +115,44 @@ public class TransactionController {
                     .body(Map.of("message", "Database transaction failed and was rolled back: " + e.getMessage()));
         }
     }
+
+    /**
+     * STAGE 10: ATOMIC FUND TRANSFER VIA DATABASE STORED PROCEDURE
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Executes the fund transfer directly inside the database engine using
+     * MySQL Stored Procedure `sp_execute_interbank_transfer` via JDBC CallableStatement.
+     * ============================================================================
+     */
+    @PostMapping("/procedure-transfer")
+    public ResponseEntity<?> executeTransferViaProcedure(@RequestBody TransferRequest request) {
+        try {
+            com.asr.asr_banking_simulator.dto.ProcedureTransferResultDto result =
+                    transactionDao.executeTransferViaStoredProcedure(request);
+
+            if ("SUCCESS".equalsIgnoreCase(result.getStatusCode())) {
+                BigDecimal remainingBalance = accountDao.findAccountByNumber(request.getFromAccNo())
+                        .map(Account::getBalance)
+                        .orElse(BigDecimal.ZERO);
+
+                return ResponseEntity.ok(Map.of(
+                        "success", true,
+                        "statusCode", result.getStatusCode(),
+                        "message", result.getStatusMessage(),
+                        "txnRef", result.getTxnRef(),
+                        "remainingBalance", remainingBalance
+                ));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                        "success", false,
+                        "statusCode", result.getStatusCode(),
+                        "message", result.getStatusMessage()
+                ));
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 }
 

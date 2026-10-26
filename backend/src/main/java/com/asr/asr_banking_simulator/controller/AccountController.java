@@ -5,6 +5,8 @@ import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
+import com.asr.asr_banking_simulator.dto.CustomerTierDto;
+import com.asr.asr_banking_simulator.dto.FdMaturityQuoteDto;
 import com.asr.asr_banking_simulator.dto.StatusUpdateRequest;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.model.Customer;
@@ -12,6 +14,7 @@ import com.asr.asr_banking_simulator.repository.AccountRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -159,5 +162,35 @@ public class AccountController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * STAGE 10: USER-DEFINED FUNCTION (UDF) — FD MATURITY QUOTE
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Invokes the MySQL User-Defined Function `fn_calculate_fd_maturity` via SQL SELECT.
+     * ============================================================================
+     */
+    @GetMapping("/functions/fd-maturity-quote")
+    public ResponseEntity<FdMaturityQuoteDto> getFdMaturityQuote(
+            @RequestParam BigDecimal principal,
+            @RequestParam BigDecimal rate,
+            @RequestParam int months) {
+        return ResponseEntity.ok(accountDao.calculateFdMaturity(principal, rate, months));
+    }
+
+    /**
+     * STAGE 10: MULTI-FUNCTION SQL QUERY — CUSTOMER TIER & DATA MASKING
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Demonstrates calling `fn_customer_tier` and `fn_mask_account_number` inside
+     * a relational projection query.
+     * ============================================================================
+     */
+    @GetMapping("/functions/customer-tier/{custId}")
+    public ResponseEntity<?> getCustomerTierAndMaskedAccount(@PathVariable String custId) {
+        return accountDao.getCustomerTierAndMaskedAccount(custId)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

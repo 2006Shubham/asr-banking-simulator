@@ -4,11 +4,14 @@ import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
+import com.asr.asr_banking_simulator.dto.CustomerTierDto;
+import com.asr.asr_banking_simulator.dto.FdMaturityQuoteDto;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.model.Customer;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -617,4 +620,75 @@ public class AccountDao {
 
         return list;
     }
+
+    /**
+     * STAGE 10: USER-DEFINED FUNCTION (UDF) FOR FD MATURITY COMPUTATION
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Demonstrates invoking the DETERMINISTIC stored function `fn_calculate_fd_maturity`
+     * directly within a standard SQL SELECT statement via JDBC PreparedStatement.
+     * ============================================================================
+     */
+    public FdMaturityQuoteDto calculateFdMaturity(BigDecimal principal, BigDecimal annualRate, int durationMonths) {
+        String sql = "SELECT fn_calculate_fd_maturity(?, ?, ?) AS maturity_amount";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setBigDecimal(1, principal);
+            ps.setBigDecimal(2, annualRate);
+            ps.setInt(3, durationMonths);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    BigDecimal maturity = rs.getBigDecimal("maturity_amount");
+                    return new FdMaturityQuoteDto(principal, annualRate, durationMonths, maturity);
+                } else {
+                    return new FdMaturityQuoteDto(principal, annualRate, durationMonths, BigDecimal.ZERO);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing stored function fn_calculate_fd_maturity: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * STAGE 10: MULTI-FUNCTION SQL QUERY WITH DATA MASKING & TIER ENRICHMENT
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Demonstrates combining multiple Stored Functions (`fn_customer_tier` and
+     * `fn_mask_account_number`) in a single query expression.
+     * ============================================================================
+     */
+    public Optional<CustomerTierDto> getCustomerTierAndMaskedAccount(String custId) {
+        String sql = "SELECT c.cust_id, c.name, fn_customer_tier(c.cust_id) AS tier, "
+                   + "COALESCE((SELECT fn_mask_account_number(a.acc_no) FROM accounts a WHERE a.cust_id = c.cust_id LIMIT 1), 'N/A') AS masked_account "
+                   + "FROM customers c "
+                   + "WHERE c.cust_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, custId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    CustomerTierDto dto = new CustomerTierDto(
+                            rs.getString("cust_id"),
+                            rs.getString("name"),
+                            rs.getString("tier"),
+                            rs.getString("masked_account")
+                    );
+                    return Optional.of(dto);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing stored functions for customer tier: " + e.getMessage(), e);
+        }
+
+        return Optional.empty();
+    }
 }
+
