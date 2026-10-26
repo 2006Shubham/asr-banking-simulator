@@ -4,11 +4,13 @@ import com.asr.asr_banking_simulator.dto.AccountBalanceAuditDto;
 import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.BatchInterestResultDto;
 import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
+import com.asr.asr_banking_simulator.dto.BufferPoolMetricsDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.dto.CustomerSecurityAuditDto;
 import com.asr.asr_banking_simulator.dto.CustomerTierDto;
 import com.asr.asr_banking_simulator.dto.FdMaturityQuoteDto;
+import com.asr.asr_banking_simulator.dto.QueryExplainPlanDto;
 import com.asr.asr_banking_simulator.dto.RolePrivilegeDto;
 import com.asr.asr_banking_simulator.dto.SqlInjectionDemoDto;
 import com.asr.asr_banking_simulator.model.Account;
@@ -987,6 +989,114 @@ public class AccountDao {
         }
 
         return list;
+    }
+
+    /**
+     * STAGE 14: INNODB BUFFER POOL ENGINE HEALTH & HIT RATIO
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Queries MySQL internal server status variables to calculate real-time
+     * InnoDB Buffer Pool cache performance and memory utilization metrics.
+     * ============================================================================
+     */
+    public BufferPoolMetricsDto getBufferPoolMetrics() {
+        String statusSql = "SHOW GLOBAL STATUS WHERE Variable_name IN ("
+                         + "'Innodb_buffer_pool_read_requests', "
+                         + "'Innodb_buffer_pool_reads', "
+                         + "'Innodb_buffer_pool_pages_total', "
+                         + "'Innodb_buffer_pool_pages_data', "
+                         + "'Innodb_buffer_pool_pages_free', "
+                         + "'Innodb_buffer_pool_pages_dirty', "
+                         + "'Innodb_buffer_pool_pages_flushed')";
+
+        long req = 0;
+        long reads = 0;
+        long totalPages = 0;
+        long dataPages = 0;
+        long freePages = 0;
+        long dirtyPages = 0;
+        long flushedPages = 0;
+        double poolSizeMb = 128.0;
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(statusSql)) {
+
+            while (rs.next()) {
+                String name = rs.getString("Variable_name");
+                long val = rs.getLong("Value");
+                switch (name) {
+                    case "Innodb_buffer_pool_read_requests" -> req = val;
+                    case "Innodb_buffer_pool_reads" -> reads = val;
+                    case "Innodb_buffer_pool_pages_total" -> totalPages = val;
+                    case "Innodb_buffer_pool_pages_data" -> dataPages = val;
+                    case "Innodb_buffer_pool_pages_free" -> freePages = val;
+                    case "Innodb_buffer_pool_pages_dirty" -> dirtyPages = val;
+                    case "Innodb_buffer_pool_pages_flushed" -> flushedPages = val;
+                }
+            }
+
+            double totalOps = req + reads;
+            double hitRatio = totalOps > 0 ? (req / totalOps) * 100.0 : 100.0;
+            String health = hitRatio >= 99.0 ? "OPTIMAL (Production Grade >= 99%)" : "SUB_OPTIMAL (Requires Cache Tuning)";
+
+            // Query pool size
+            try (ResultSet sizeRs = stmt.executeQuery("SELECT @@innodb_buffer_pool_size AS pool_size")) {
+                if (sizeRs.next()) {
+                    poolSizeMb = sizeRs.getLong("pool_size") / (1024.0 * 1024.0);
+                }
+            }
+
+            return new BufferPoolMetricsDto(req, reads, Math.round(hitRatio * 100.0) / 100.0,
+                    totalPages, dataPages, freePages, dirtyPages, flushedPages, poolSizeMb, health);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error querying InnoDB buffer pool status: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * STAGE 14: EXPLAIN ANALYZE QUERY PROFILING BENCHMARK
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Executes modern EXPLAIN ANALYZE on a 3-table relational banking query.
+     * Unlike static EXPLAIN, this instruments the real execution engine iterator
+     * tree, capturing actual CPU execution timings and row counts.
+     * ============================================================================
+     */
+    public QueryExplainPlanDto explainTransactionStatementQuery(String accNo) {
+        String targetAcc = (accNo != null && !accNo.isBlank()) ? accNo : "ACC001";
+        String explainSql = "EXPLAIN ANALYZE "
+                          + "SELECT t.txn_id, t.amount, t.txn_date, a.acc_type, c.name "
+                          + "FROM transactions t "
+                          + "JOIN accounts a ON t.acc_no = a.acc_no "
+                          + "JOIN customers c ON a.cust_id = c.cust_id "
+                          + "WHERE t.acc_no = '" + targetAcc + "' AND t.txn_date >= '2026-01-01' "
+                          + "ORDER BY t.txn_date DESC";
+
+        StringBuilder planTree = new StringBuilder();
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(explainSql)) {
+
+            while (rs.next()) {
+                planTree.append(rs.getString(1)).append("\n");
+            }
+
+            String notes = "Hierarchical Volcano Iterator Tree. Cost and actual time (startup..completion in ms) "
+                         + "measure physical storage page scans and in-memory hash/nested loop joins.";
+
+            return new QueryExplainPlanDto(
+                    "EXPLAIN_ANALYZE_ITERATOR_TREE",
+                    explainSql,
+                    planTree.toString().trim(),
+                    notes
+            );
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing EXPLAIN ANALYZE: " + e.getMessage(), e);
+        }
     }
 }
 
