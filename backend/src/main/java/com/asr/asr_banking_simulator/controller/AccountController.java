@@ -1,5 +1,6 @@
 package com.asr.asr_banking_simulator.controller;
 
+import com.asr.asr_banking_simulator.dao.AccountDao;
 import com.asr.asr_banking_simulator.dto.StatusUpdateRequest;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.repository.AccountRepository;
@@ -15,46 +16,88 @@ import java.util.List;
 public class AccountController {
 
     private final AccountRepository accountRepo;
+    private final AccountDao accountDao;
 
-    public AccountController(AccountRepository accountRepo) {
+    public AccountController(AccountRepository accountRepo, AccountDao accountDao) {
         this.accountRepo = accountRepo;
+        this.accountDao = accountDao;
     }
 
     @GetMapping
     public List<Account> getAllAccounts() {
-        return accountRepo.findAll();
+        return accountDao.findAllAccounts();
     }
 
+    /**
+     * READ: Retrieves accounts for a customer using our manually written SQL via AccountDao & JDBC.
+     */
     @GetMapping("/customer/{custId}")
     public List<Account> getAccountsByCustomer(@PathVariable String custId) {
-        return accountRepo.findByCustId(custId);
+        return accountDao.findAccountsByCustomerId(custId);
     }
 
+    /**
+     * READ: Retrieves a single account by primary key using our manually written SQL via AccountDao & JDBC.
+     */
     @GetMapping("/{accNo}")
     public ResponseEntity<?> getAccountByNumber(@PathVariable String accNo) {
-        return accountRepo.findById(accNo)
+        return accountDao.findAccountByNumber(accNo)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * CREATE: Creates a new account via manual SQL INSERT in AccountDao.
+     */
     @PostMapping
     public ResponseEntity<Account> createAccount(@RequestBody Account account) {
-        if (account.getOpenDate() == null) {
-            account.setOpenDate(LocalDate.now());
-        }
-        if (account.getStatus() == null) {
-            account.setStatus("Active");
-        }
-        Account saved = accountRepo.save(account);
+        Account saved = accountDao.insertAccount(account);
         return ResponseEntity.ok(saved);
     }
 
+    /**
+     * UPDATE: Modifies account status via manual SQL UPDATE in AccountDao.
+     */
     @PatchMapping("/{accNo}/status")
     public ResponseEntity<?> updateAccountStatus(@PathVariable String accNo, @RequestBody StatusUpdateRequest request) {
-        return accountRepo.findById(accNo).map(acc -> {
-            acc.setStatus(request.getStatus());
-            Account saved = accountRepo.save(acc);
-            return ResponseEntity.ok(saved);
-        }).orElseGet(() -> ResponseEntity.notFound().build());
+        boolean updated = accountDao.updateAccountStatus(accNo, request.getStatus());
+        if (updated) {
+            return accountDao.findAccountByNumber(accNo)
+                    .<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * DELETE: Deletes an account using manual SQL DELETE.
+     * Demonstrates foreign key ON DELETE RESTRICT protection when child rows exist.
+     */
+    @DeleteMapping("/{accNo}")
+    public ResponseEntity<?> deleteAccount(@PathVariable String accNo) {
+        try {
+            boolean deleted = accountDao.deleteAccount(accNo);
+            if (deleted) {
+                return ResponseEntity.ok(java.util.Map.of("message", "Account " + accNo + " deleted successfully."));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(409).body(java.util.Map.of("error", e.getMessage()));
+        }
+    }
+
+    /**
+     * SOFT DELETE: Closes an account (sets status to 'Closed') preserving transaction history.
+     */
+    @PostMapping("/{accNo}/close")
+    public ResponseEntity<?> closeAccount(@PathVariable String accNo) {
+        boolean closed = accountDao.closeAccount(accNo);
+        if (closed) {
+            return ResponseEntity.ok(java.util.Map.of("message", "Account " + accNo + " closed successfully."));
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

@@ -1,0 +1,290 @@
+package com.asr.asr_banking_simulator.dao;
+
+import com.asr.asr_banking_simulator.model.Account;
+import org.springframework.stereotype.Repository;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * AccountDao — Manual SQL & Standard Java JDBC Implementation
+ * ============================================================================
+ * Educational Purpose (DBMS Mini-Project):
+ * This class directly executes manually written SQL queries using standard Java
+ * JDBC (Java Database Connectivity) instead of relying on Spring Data JPA magic
+ * or Hibernate query generators.
+ *
+ * Core Concepts Illustrated:
+ * 1. Explicit SQL Statements:
+ *    The SQL query is written as a clear, readable string directly in source code.
+ *
+ * 2. PreparedStatement & SQL Injection Prevention:
+ *    We use parameter placeholders ('?') rather than string concatenation.
+ *    The database driver pre-compiles the SQL command structure first, and then
+ *    binds values separately. Even if an attacker passes input like "' OR '1'='1",
+ *    MySQL treats it purely as literal string data, not executable SQL code.
+ *
+ * 3. Connection Pooling & Resource Management:
+ *    We borrow a Connection from the HikariCP pool and use Java's try-with-resources.
+ *    This guarantees that Connection, PreparedStatement, and ResultSet are always
+ *    closed cleanly, even if an exception occurs.
+ *
+ * 4. Manual Row Mapping (ResultSet -> Java Object):
+ *    We iterate over the ResultSet cursor using rs.next() and explicitly read
+ *    each column, demonstrating how database records map to Java objects.
+ * ============================================================================
+ */
+@Repository
+public class AccountDao {
+
+    private final DataSource dataSource;
+
+    public AccountDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    /**
+     * Retrieves all accounts belonging to a specific customer using explicit SQL.
+     *
+     * SQL Query:
+     *   SELECT acc_no, cust_id, branch_id, acc_type, balance, open_date, status
+     *   FROM accounts
+     *   WHERE cust_id = ?
+     *   ORDER BY acc_no ASC;
+     *
+     * @param custId The unique customer identifier (e.g., "CUST001")
+     * @return List of matching Account objects
+     */
+    public List<Account> findAccountsByCustomerId(String custId) {
+        // 1. Define the explicit SQL query string
+        String sql = "SELECT acc_no, cust_id, branch_id, acc_type, balance, open_date, status "
+                   + "FROM accounts "
+                   + "WHERE cust_id = ? "
+                   + "ORDER BY acc_no ASC";
+
+        List<Account> accounts = new ArrayList<>();
+
+        // 2. Try-with-resources guarantees closing of Connection and PreparedStatement
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // 3. Bind the parameter safely (1-indexed in JDBC)
+            ps.setString(1, custId);
+
+            // 4. Execute the query and obtain the ResultSet cursor
+            try (ResultSet rs = ps.executeQuery()) {
+                // 5. Iterate through returned rows one-by-one
+                while (rs.next()) {
+                    Account account = mapRowToAccount(rs);
+                    accounts.add(account);
+                }
+            }
+
+        } catch (SQLException e) {
+            // Log and wrap in an unchecked exception for clean service-layer handling
+            throw new RuntimeException("Database error executing findAccountsByCustomerId: " + e.getMessage(), e);
+        }
+
+        return accounts;
+    }
+
+    /**
+     * Retrieves a single account by its primary key (acc_no) using explicit SQL.
+     *
+     * SQL Query:
+     *   SELECT acc_no, cust_id, branch_id, acc_type, balance, open_date, status
+     *   FROM accounts
+     *   WHERE acc_no = ?;
+     *
+     * @param accNo The unique account number (e.g., "ACC001")
+     * @return Optional containing the Account if found, or empty if not
+     */
+    public Optional<Account> findAccountByNumber(String accNo) {
+        String sql = "SELECT acc_no, cust_id, branch_id, acc_type, balance, open_date, status "
+                   + "FROM accounts "
+                   + "WHERE acc_no = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, accNo);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapRowToAccount(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findAccountByNumber: " + e.getMessage(), e);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * READ ALL: Retrieves all accounts across all customers.
+     */
+    public List<Account> findAllAccounts() {
+        String sql = "SELECT acc_no, cust_id, branch_id, acc_type, balance, open_date, status "
+                   + "FROM accounts ORDER BY acc_no ASC";
+
+        List<Account> accounts = new ArrayList<>();
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                accounts.add(mapRowToAccount(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findAllAccounts: " + e.getMessage(), e);
+        }
+        return accounts;
+    }
+
+    /**
+     * CREATE: Inserts a new account record into the database using explicit SQL.
+     *
+     * SQL Query:
+     *   INSERT INTO accounts (acc_no, cust_id, branch_id, acc_type, balance, open_date, status)
+     *   VALUES (?, ?, ?, ?, ?, ?, ?)
+     *
+     * JDBC Execution:
+     *   Uses PreparedStatement.executeUpdate() which returns the affected row count (1 on success).
+     */
+    public Account insertAccount(Account account) {
+        String sql = "INSERT INTO accounts (acc_no, cust_id, branch_id, acc_type, balance, open_date, status) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        // Ensure defaults if missing
+        if (account.getAccNo() == null || account.getAccNo().isBlank()) {
+            account.setAccNo("ACC" + (System.currentTimeMillis() % 100000));
+        }
+        if (account.getOpenDate() == null) {
+            account.setOpenDate(java.time.LocalDate.now());
+        }
+        if (account.getStatus() == null) {
+            account.setStatus("Active");
+        }
+        if (account.getBalance() == null) {
+            account.setBalance(java.math.BigDecimal.ZERO);
+        }
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, account.getAccNo());
+            ps.setString(2, account.getCustId());
+            ps.setString(3, account.getBranchId() != null ? account.getBranchId() : "BR001");
+            ps.setString(4, account.getAccType());
+            ps.setBigDecimal(5, account.getBalance());
+            ps.setDate(6, java.sql.Date.valueOf(account.getOpenDate()));
+            ps.setString(7, account.getStatus());
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Creating account failed, no rows affected.");
+            }
+
+            return account;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing insertAccount: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * UPDATE: Modifies the status of an existing account.
+     *
+     * SQL Query:
+     *   UPDATE accounts SET status = ? WHERE acc_no = ?
+     *
+     * @return true if an account was updated, false if the account was not found
+     */
+    public boolean updateAccountStatus(String accNo, String newStatus) {
+        String sql = "UPDATE accounts SET status = ? WHERE acc_no = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, newStatus);
+            ps.setString(2, accNo);
+
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing updateAccountStatus: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * DELETE: Attempts to permanently delete an account.
+     *
+     * SQL Query:
+     *   DELETE FROM accounts WHERE acc_no = ?
+     *
+     * Demonstrates DBMS Referential Integrity:
+     * If the account has child rows in `transactions`, MySQL throws error 1451
+     * (SQLIntegrityConstraintViolationException) due to ON DELETE RESTRICT.
+     *
+     * @return true if deleted, false if account not found
+     */
+    public boolean deleteAccount(String accNo) {
+        String sql = "DELETE FROM accounts WHERE acc_no = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, accNo);
+
+            int affectedRows = ps.executeUpdate();
+            return affectedRows > 0;
+
+        } catch (java.sql.SQLIntegrityConstraintViolationException e) {
+            throw new RuntimeException("Cannot delete account " + accNo + 
+                    " because related financial records (transactions) exist. Foreign key constraint violated.", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing deleteAccount: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * SOFT DELETE: Closes an account without destroying historical transaction records.
+     * This is the standard banking practice to preserve auditability.
+     */
+    public boolean closeAccount(String accNo) {
+        return updateAccountStatus(accNo, "Closed");
+    }
+
+    /**
+     * Helper method to map a single row of the ResultSet into an Account model object.
+     * Demonstrates data type mapping between MySQL and Java:
+     *   - VARCHAR(30)   -> String
+     *   - DECIMAL(15,2) -> java.math.BigDecimal
+     *   - DATE          -> java.time.LocalDate
+     */
+    private Account mapRowToAccount(ResultSet rs) throws SQLException {
+        Account account = new Account();
+        account.setAccNo(rs.getString("acc_no"));
+        account.setCustId(rs.getString("cust_id"));
+        account.setBranchId(rs.getString("branch_id"));
+        account.setAccType(rs.getString("acc_type"));
+        account.setBalance(rs.getBigDecimal("balance"));
+
+        java.sql.Date openDate = rs.getDate("open_date");
+        if (openDate != null) {
+            account.setOpenDate(openDate.toLocalDate());
+        }
+
+        account.setStatus(rs.getString("status"));
+        return account;
+    }
+}
