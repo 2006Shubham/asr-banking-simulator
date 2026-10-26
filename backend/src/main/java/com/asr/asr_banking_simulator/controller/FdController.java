@@ -47,6 +47,20 @@ public class FdController {
 
     @PostMapping
     public ResponseEntity<FixedDeposit> createFD(@RequestBody FixedDeposit fd) {
+        if (fd.getFdId() == null || fd.getFdId().isBlank()) {
+            long count = fdRepo.count() + 1;
+            String generatedId = String.format("FD%03d", count);
+            while (fdRepo.existsById(generatedId)) {
+                count++;
+                generatedId = String.format("FD%03d", count);
+            }
+            fd.setFdId(generatedId);
+        }
+
+        if (fd.getBranchId() == null || fd.getBranchId().isBlank()) {
+            fd.setBranchId("BR001");
+        }
+
         if (fd.getStartDate() == null) {
             fd.setStartDate(LocalDate.now());
         }
@@ -56,7 +70,38 @@ public class FdController {
         if (fd.getStatus() == null) {
             fd.setStatus("Active");
         }
+
         FixedDeposit saved = fdRepo.save(fd);
+
+        // Auto-generate initial projected interest record in fd_interest
+        if (saved.getAmount() != null && saved.getInterestRate() != null && saved.getDurationMonths() != null) {
+            java.math.BigDecimal years = java.math.BigDecimal.valueOf(saved.getDurationMonths())
+                    .divide(java.math.BigDecimal.valueOf(12), 4, java.math.RoundingMode.HALF_UP);
+            java.math.BigDecimal rateFraction = saved.getInterestRate()
+                    .divide(java.math.BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP);
+            java.math.BigDecimal interest = saved.getAmount()
+                    .multiply(rateFraction)
+                    .multiply(years)
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+
+            long intCount = fdInterestRepo.count() + 1;
+            String intId = String.format("FDI%03d", intCount);
+            while (fdInterestRepo.existsById(intId)) {
+                intCount++;
+                intId = String.format("FDI%03d", intCount);
+            }
+
+            FdInterest fdi = new FdInterest(
+                    intId,
+                    saved.getFdId(),
+                    interest,
+                    saved.getStartDate(),
+                    saved.getMaturityDate(),
+                    "Pending"
+            );
+            fdInterestRepo.save(fdi);
+        }
+
         return ResponseEntity.ok(saved);
     }
 }

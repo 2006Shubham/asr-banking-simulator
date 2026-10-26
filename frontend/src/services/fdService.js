@@ -37,6 +37,25 @@ export const fdService = {
     const response = await api.get(`/api/fds/${fdId}/interests`);
     return response.data;
   },
+
+  /**
+   * Book a new Fixed Deposit contract
+   * @param {Object} fdData
+   */
+  createFD: async (fdData) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const newFd = {
+        fdId: `FD${Math.floor(100 + Math.random() * 900)}`,
+        ...fdData,
+        startDate: new Date().toISOString().split("T")[0],
+        status: "Active",
+      };
+      return newFd;
+    }
+    const response = await api.post("/api/fds", fdData);
+    return response.data;
+  },
 };
 
 export default fdService;

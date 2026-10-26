@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import loanService from "../../services/loanService";
+import loanInstallmentService from "../../services/loanInstallmentService";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { maskAccountNumber } from "../../utils/maskers";
 import { LoanCard } from "../../components/loans";
@@ -61,30 +62,39 @@ const LoansPage = () => {
     setPaymentModalOpen(true);
   };
 
-  // Simulate paying an EMI in local state
-  const handleConfirmEmiPayment = () => {
+  // Execute paying an EMI via live Spring Boot REST API
+  const handleConfirmEmiPayment = async () => {
     if (!selectedLoan || !selectedInstallment) return;
 
-    setProcessing(true);
-    setTimeout(() => {
-      // Update installment state locally
+    try {
+      setProcessing(true);
+      const updatedInst = await loanInstallmentService.payInstallment(
+        selectedLoan.loanId,
+        selectedInstallment.installmentId
+      );
+
+      // Update installment state locally with live DB response
       setInstallmentsMap((prevMap) => {
         const currentLoanInsts = prevMap[selectedLoan.loanId] || [];
         const updated = currentLoanInsts.map((inst) =>
           inst.installmentId === selectedInstallment.installmentId
-            ? { ...inst, status: "Paid", paidOn: new Date().toISOString().split("T")[0] }
+            ? { ...inst, ...updatedInst, status: "Paid", paidOn: updatedInst.paidOn || new Date().toISOString().split("T")[0] }
             : inst
         );
         return { ...prevMap, [selectedLoan.loanId]: updated };
       });
 
       setPaymentReceipt({
-        id: `RCP-EMI-${Math.floor(100000 + Math.random() * 900000)}`,
-        date: new Date().toLocaleDateString("en-IN"),
+        id: `RCP-${updatedInst.installmentId || selectedInstallment.installmentId}`,
+        date: updatedInst.paidOn || new Date().toLocaleDateString("en-IN"),
       });
-      setProcessing(false);
       setPaymentSuccess(true);
-    }, 500);
+    } catch (err) {
+      console.error("Failed to execute EMI payment", err);
+      alert(err.response?.data?.message || "Failed to process EMI payment. Please try again.");
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -193,7 +203,7 @@ const LoansPage = () => {
       <Modal
         isOpen={paymentModalOpen}
         onClose={handleCloseModal}
-        title="Simulated EMI Repayment"
+        title="Repay Scheduled EMI"
         description={`${selectedLoan?.loanType} Loan #${selectedLoan?.loanId} • Installment #${selectedInstallment?.installmentNo}`}
         footer={
           paymentSuccess ? (
@@ -224,11 +234,11 @@ const LoansPage = () => {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h4 className="text-base font-bold text-slate-900">
-              Installment Payment Simulated!
+              Installment Payment Successful!
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto">
               EMI #{selectedInstallment?.installmentNo} of{" "}
-              <strong>{formatCurrency(selectedInstallment?.amount || 0)}</strong> has been marked as <strong>Paid</strong> in the simulator ledger.
+              <strong>{formatCurrency(selectedInstallment?.amount || 0)}</strong> has been settled and marked as <strong>Paid</strong> in the database.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left space-y-1">
               <p>Receipt ID: {paymentReceipt?.id || "RCP-EMI-104928"}</p>

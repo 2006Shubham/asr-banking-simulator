@@ -14,6 +14,7 @@ This folder contains stage-by-stage documentation of all architectural decisions
 | **Stage 2** | [**Stage 2: Backend Entities & Repositories**](./stage-2-backend-entities-and-repositories.md) | Spring Data JPA models (`model/*.java`), composite key (`LoanBorrowerId`), 14 Repositories (`repository/*.java`), and CORS configuration (`CorsConfig.java`). | ✅ Complete |
 | **Stage 3** | [**Stage 3: REST Controllers & CRUD APIs**](./stage-3-rest-controllers-and-crud-api.md) | 9 Spring Boot `@RestController` classes, request DTOs, atomic transfer transactions, card lock/unlock toggles, EMI payments. | ✅ Complete |
 | **Stage 4** | [**Stage 4: End-to-End Live Integration**](./stage-4-live-integration-and-testing.md) | Connecting Vite frontend (`VITE_USE_MOCK=false`) to live Spring Boot APIs, launching services, and verifying CRUD operations. | ✅ Complete |
+| **Stage 5** | [**Stage 5: Complete Interactive Features & Live Transactions**](./stage-5-complete-feature-wiring.md) | Full wiring of live loan EMI payments, overview instant fund transfers, and Fixed Deposit booking with automatic interest accrual into MySQL. | ✅ Complete |
 
 ---
 

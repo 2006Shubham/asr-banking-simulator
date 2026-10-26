@@ -17,6 +17,7 @@ import {
   accountService,
   transactionService,
   loanService,
+  loanInstallmentService,
   fdService,
 } from "../../services";
 import {
@@ -88,28 +89,71 @@ const OverviewPage = () => {
   const [loanPayStatus, setLoanPayStatus] = useState(null);
   const [loanReceipt, setLoanReceipt] = useState(null);
 
-  const handleSimulateTransfer = (e) => {
+  const handleSimulateTransfer = async (e) => {
     e.preventDefault();
     if (!transferBeneficiary || !transferAmount || Number(transferAmount) <= 0) return;
 
     setTransferStatus("processing");
-    setTimeout(() => {
+    try {
+      const targetAcc = accounts.find((a) => a.accNo !== transferSourceAcc)?.accNo || "ACC002";
+      const result = await transactionService.executeTransfer({
+        fromAccNo: transferSourceAcc,
+        toAccNo: targetAcc,
+        amount: transferAmount,
+        channel: transferChannel,
+        description: `Fund Transfer to ${transferBeneficiary}`,
+        beneficiary: transferBeneficiary,
+      });
+
       setTransferReceipt({
-        ref: `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+        ref: result.ref || result.txnId || `TXN${Math.floor(100000 + Math.random() * 900000)}`,
         date: new Date().toLocaleString("en-IN"),
       });
       setTransferStatus("success");
-    }, 500);
+
+      // Reload live accounts and transactions
+      const custId = customer?.custId || "CUST001";
+      const [updatedAccs, updatedTxns] = await Promise.all([
+        accountService.getAccountsByCustomer(custId),
+        transactionService.getTransactions(),
+      ]);
+      if (updatedAccs?.length) setAccounts(updatedAccs);
+      if (updatedTxns?.length) setTransactions(updatedTxns);
+    } catch (err) {
+      console.error("Transfer failed", err);
+      alert(err.response?.data?.message || err.message || "Transfer failed. Please check funds.");
+      setTransferStatus(null);
+    }
   };
 
-  const handleSimulateLoanPay = () => {
+  const handleSimulateLoanPay = async () => {
     setLoanPayStatus("processing");
-    setTimeout(() => {
+    try {
+      const activeLoan = loans[0];
+      const loanId = activeLoan?.loanId || "LN001";
+      const insts = await loanInstallmentService.getInstallmentsByLoan(loanId);
+      const pendingInst = insts.find((i) => i.status !== "Paid") || insts[0];
+      const installmentId = pendingInst?.installmentId || "INS003";
+
+      const updated = await loanInstallmentService.payInstallment(loanId, installmentId);
       setLoanReceipt({
-        ref: `EMI-LN001-${Math.floor(100000 + Math.random() * 900000)}`,
+        ref: `RCP-${updated.installmentId || installmentId}`,
       });
       setLoanPayStatus("success");
-    }, 500);
+
+      // Reload accounts and loans
+      const custId = customer?.custId || "CUST001";
+      const [updatedAccs, updatedLoans] = await Promise.all([
+        accountService.getAccountsByCustomer(custId),
+        loanService.getLoansByCustomer(custId),
+      ]);
+      if (updatedAccs?.length) setAccounts(updatedAccs);
+      if (updatedLoans?.length) setLoans(updatedLoans);
+    } catch (err) {
+      console.error("Loan payment failed", err);
+      alert(err.response?.data?.message || "Loan payment failed. Please try again.");
+      setLoanPayStatus(null);
+    }
   };
 
   const resetTransferModal = () => {
@@ -474,20 +518,18 @@ const OverviewPage = () => {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h4 className="text-base font-bold text-slate-900">
-              Transfer Simulated Successfully!
+              Transfer Completed Successfully!
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
-              Simulated payment of <strong>{formatCurrency(Number(transferAmount))}</strong> to{" "}
+              Transferred <strong>{formatCurrency(Number(transferAmount))}</strong> to{" "}
               <strong>{transferBeneficiary}</strong> via {transferChannel}.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
               <p>Reference: {transferReceipt?.ref || "TXN102938"}</p>
               <p>Channel: {transferChannel}</p>
-              <p>Timestamp: {transferReceipt?.date || "01/10/2026, 12:00:00 PM"}</p>
+              <p>Timestamp: {transferReceipt?.date || new Date().toLocaleString("en-IN")}</p>
+              <p className="text-emerald-700 font-semibold mt-1">Status: COMPLETED (Atomic DB Commit)</p>
             </div>
-            <p className="text-[11px] text-amber-700 italic">
-              Notice: This is an academic demo simulation. No actual funds were debited.
-            </p>
           </div>
         ) : (
           <form onSubmit={handleSimulateTransfer} className="space-y-4">
@@ -579,15 +621,15 @@ const OverviewPage = () => {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h4 className="text-base font-bold text-slate-900">
-              Loan Installment Paid!
+              Loan Installment Paid Successfully!
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
-              Installment #3 for Personal Loan #LN001 has been marked as <strong>Paid</strong> in the simulator ledger.
+              Installment payment for Personal Loan #LN001 has been settled and marked as <strong>Paid</strong> in the database.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
-              <p>Receipt Ref: {loanReceipt?.ref || "EMI-LN001-992104"}</p>
+              <p>Receipt Ref: {loanReceipt?.ref || "RCP-INS003"}</p>
               <p>Amount Paid: ₹9,500.00</p>
-              <p>Status: Success (Simulation)</p>
+              <p className="text-emerald-700 font-semibold mt-1">Status: COMPLETED (Live DB Record)</p>
             </div>
           </div>
         ) : (
