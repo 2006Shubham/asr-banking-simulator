@@ -1,5 +1,7 @@
 package com.asr.asr_banking_simulator.controller;
 
+import com.asr.asr_banking_simulator.dao.AccountDao;
+import com.asr.asr_banking_simulator.dao.TransactionDao;
 import com.asr.asr_banking_simulator.dto.TransferRequest;
 import com.asr.asr_banking_simulator.model.Account;
 import com.asr.asr_banking_simulator.model.Transaction;
@@ -7,10 +9,10 @@ import com.asr.asr_banking_simulator.repository.AccountRepository;
 import com.asr.asr_banking_simulator.repository.TransactionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -24,10 +26,15 @@ public class TransactionController {
 
     private final TransactionRepository transactionRepo;
     private final AccountRepository accountRepo;
+    private final TransactionDao transactionDao;
+    private final AccountDao accountDao;
 
-    public TransactionController(TransactionRepository transactionRepo, AccountRepository accountRepo) {
+    public TransactionController(TransactionRepository transactionRepo, AccountRepository accountRepo,
+                                 TransactionDao transactionDao, AccountDao accountDao) {
         this.transactionRepo = transactionRepo;
         this.accountRepo = accountRepo;
+        this.transactionDao = transactionDao;
+        this.accountDao = accountDao;
     }
 
     @GetMapping
@@ -35,9 +42,12 @@ public class TransactionController {
         return transactionRepo.findAllByOrderByTxnDateDesc();
     }
 
+    /**
+     * READ: Retrieves account transactions using manual SQL via TransactionDao & JDBC.
+     */
     @GetMapping("/account/{accNo}")
     public List<Transaction> getTransactionsByAccount(@PathVariable String accNo) {
-        return transactionRepo.findByAccNoOrderByTxnDateDesc(accNo);
+        return transactionDao.findTransactionsByAccount(accNo);
     }
 
     @GetMapping("/{txnId}")
@@ -62,76 +72,33 @@ public class TransactionController {
         return ResponseEntity.ok(saved);
     }
 
+    /**
+     * STAGE 6: ATOMIC FUND TRANSFER VIA PURE JDBC TRANSACTION
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Directly executes multi-step transfer with conn.setAutoCommit(false),
+     * row-level locking (SELECT ... FOR UPDATE), and explicit rollback on failure.
+     * ============================================================================
+     */
     @PostMapping("/transfer")
-    @Transactional
     public ResponseEntity<?> executeTransfer(@RequestBody TransferRequest request) {
-        if (request.getFromAccNo() == null || request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid transfer parameters"));
+        try {
+            Transaction debitTxn = transactionDao.transferFundsWithAcid(request);
+            BigDecimal remainingBalance = accountDao.findAccountByNumber(request.getFromAccNo())
+                    .map(Account::getBalance)
+                    .orElse(BigDecimal.ZERO);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Transfer executed successfully under ACID transaction guarantees",
+                    "transaction", debitTxn,
+                    "remainingBalance", remainingBalance
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        } catch (SQLException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Database transaction failed and was rolled back: " + e.getMessage()));
         }
-
-        Optional<Account> fromAccOpt = accountRepo.findById(request.getFromAccNo());
-        if (fromAccOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Source account not found"));
-        }
-
-        Account fromAcc = fromAccOpt.get();
-
-        if (fromAcc.getBalance().compareTo(request.getAmount()) < 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Insufficient funds for this transfer"));
-        }
-
-        // Deduct source account balance
-        fromAcc.setBalance(fromAcc.getBalance().subtract(request.getAmount()));
-        accountRepo.save(fromAcc);
-
-        String txnId = "TXN" + System.currentTimeMillis();
-        String refNo = (request.getChannel() != null ? request.getChannel() : "UPI") + "/" 
-                + LocalDateTime.now().getYear() + "/" 
-                + String.format("%04d", (int)(Math.random() * 10000));
-
-        String desc = request.getDescription() != null && !request.getDescription().isBlank() 
-                ? request.getDescription() 
-                : "Transfer to " + (request.getBeneficiary() != null ? request.getBeneficiary() : request.getToAccNo());
-
-        Transaction debitTxn = new Transaction(
-                txnId,
-                fromAcc.getAccNo(),
-                "Debit",
-                request.getAmount(),
-                LocalDateTime.now(),
-                request.getChannel() != null ? request.getChannel() : "UPI",
-                "Success",
-                refNo,
-                desc
-        );
-
-        transactionRepo.save(debitTxn);
-
-        // If target account is an internal account in this bank, credit it as well
-        if (request.getToAccNo() != null) {
-            accountRepo.findById(request.getToAccNo()).ifPresent(toAcc -> {
-                toAcc.setBalance(toAcc.getBalance().add(request.getAmount()));
-                accountRepo.save(toAcc);
-
-                Transaction creditTxn = new Transaction(
-                        "TXN" + (System.currentTimeMillis() + 1),
-                        toAcc.getAccNo(),
-                        "Credit",
-                        request.getAmount(),
-                        LocalDateTime.now(),
-                        request.getChannel() != null ? request.getChannel() : "UPI",
-                        "Success",
-                        refNo + "-CR",
-                        "Transfer received from " + fromAcc.getAccNo()
-                );
-                transactionRepo.save(creditTxn);
-            });
-        }
-
-        return ResponseEntity.ok(Map.of(
-                "message", "Transfer executed successfully",
-                "transaction", debitTxn,
-                "remainingBalance", fromAcc.getBalance()
-        ));
     }
 }
+
