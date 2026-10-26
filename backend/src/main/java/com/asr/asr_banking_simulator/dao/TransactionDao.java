@@ -237,4 +237,54 @@ public class TransactionDao {
 
         return list;
     }
+
+    /**
+     * STAGE 9: INDEX-OPTIMIZED RANGE QUERY (Composite B+ Tree Index)
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Retrieves transactions for an account within a date interval.
+     * Uses the composite B+ Tree index `idx_transactions_acc_date (acc_no, txn_date DESC)`
+     * to perform an index range scan (type: range) with Index Condition Pushdown (ICP).
+     * ============================================================================
+     */
+    public List<Transaction> findStatementByDateRange(String accNo, LocalDateTime start, LocalDateTime end) {
+        String sql = "SELECT txn_id, acc_no, txn_type, amount, txn_date, channel, status, ref_no, description "
+                   + "FROM transactions "
+                   + "WHERE acc_no = ? AND txn_date BETWEEN ? AND ? "
+                   + "ORDER BY txn_date DESC";
+
+        List<Transaction> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, accNo);
+            ps.setTimestamp(2, Timestamp.valueOf(start));
+            ps.setTimestamp(3, Timestamp.valueOf(end));
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Transaction txn = new Transaction();
+                    txn.setTxnId(rs.getString("txn_id"));
+                    txn.setAccNo(rs.getString("acc_no"));
+                    txn.setTxnType(rs.getString("txn_type"));
+                    txn.setAmount(rs.getBigDecimal("amount"));
+                    Timestamp ts = rs.getTimestamp("txn_date");
+                    if (ts != null) {
+                        txn.setTxnDate(ts.toLocalDateTime());
+                    }
+                    txn.setChannel(rs.getString("channel"));
+                    txn.setStatus(rs.getString("status"));
+                    txn.setRefNo(rs.getString("ref_no"));
+                    txn.setDescription(rs.getString("description"));
+                    list.add(txn);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findStatementByDateRange: " + e.getMessage(), e);
+        }
+
+        return list;
+    }
 }

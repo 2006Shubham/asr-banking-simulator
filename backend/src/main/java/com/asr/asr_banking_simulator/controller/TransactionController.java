@@ -50,6 +50,21 @@ public class TransactionController {
         return transactionDao.findTransactionsByAccount(accNo);
     }
 
+    /**
+     * STAGE 9: INDEX-OPTIMIZED STATEMENT QUERY
+     * Uses composite B+ Tree index idx_transactions_acc_date (acc_no, txn_date DESC)
+     */
+    @GetMapping("/account/{accNo}/statement")
+    public List<Transaction> getStatementByDateRange(
+            @PathVariable String accNo,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+
+        LocalDateTime s = (start != null) ? start : LocalDateTime.now().minusMonths(6);
+        LocalDateTime e = (end != null) ? end : LocalDateTime.now();
+        return transactionDao.findStatementByDateRange(accNo, s, e);
+    }
+
     @GetMapping("/{txnId}")
     public ResponseEntity<?> getTransactionById(@PathVariable String txnId) {
         return transactionRepo.findById(txnId)
