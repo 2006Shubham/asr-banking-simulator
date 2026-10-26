@@ -4,6 +4,7 @@ import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.model.Account;
+import com.asr.asr_banking_simulator.model.Customer;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -489,5 +490,92 @@ public class AccountDao {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * STAGE 5: SCALAR SUBQUERY IN WHERE CLAUSE
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Finds high-net-worth accounts whose balance is strictly above the bank-wide
+     * average active balance.
+     *
+     * The inner query (SELECT AVG(balance) FROM accounts WHERE status = 'Active')
+     * is an independent scalar subquery evaluated once.
+     * ============================================================================
+     */
+    public List<Account> findHighValueAccountsAboveAverage() {
+        String sql = "SELECT a.acc_no, a.cust_id, a.branch_id, a.acc_type, a.balance, a.open_date, a.status, "
+                   + "       b.branch_name, b.ifsc_code "
+                   + "FROM accounts a "
+                   + "INNER JOIN branches b ON a.branch_id = b.branch_id "
+                   + "WHERE a.balance > ( "
+                   + "    SELECT AVG(balance) "
+                   + "    FROM accounts "
+                   + "    WHERE status = 'Active' "
+                   + ") "
+                   + "AND a.status = 'Active' "
+                   + "ORDER BY a.balance DESC";
+
+        List<Account> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(mapRowToAccount(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findHighValueAccountsAboveAverage: " + e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    /**
+     * STAGE 5: CORRELATED ANTI-JOIN (EXISTS & NOT EXISTS)
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Identifies customers who hold active accounts, but have NEVER opened a Fixed
+     * Deposit (FD).
+     *
+     * In Relational Calculus, this represents existential quantification (∃ and ¬∃).
+     * It is immune to the Three-Valued Logic NULL trap that plagues NOT IN.
+     * ============================================================================
+     */
+    public List<Customer> findDepositOnlyCustomers() {
+        String sql = "SELECT c.cust_id, c.name, c.email, c.phone "
+                   + "FROM customers c "
+                   + "WHERE EXISTS ( "
+                   + "    SELECT 1 FROM accounts a "
+                   + "    WHERE a.cust_id = c.cust_id AND a.status = 'Active' "
+                   + ") "
+                   + "AND NOT EXISTS ( "
+                   + "    SELECT 1 FROM fixed_deposits fd "
+                   + "    WHERE fd.cust_id = c.cust_id "
+                   + ") "
+                   + "ORDER BY c.cust_id ASC";
+
+        List<Customer> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Customer customer = new Customer();
+                customer.setCustId(rs.getString("cust_id"));
+                customer.setName(rs.getString("name"));
+                customer.setEmail(rs.getString("email"));
+                customer.setPhone(rs.getString("phone"));
+                list.add(customer);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findDepositOnlyCustomers: " + e.getMessage(), e);
+        }
+
+        return list;
     }
 }

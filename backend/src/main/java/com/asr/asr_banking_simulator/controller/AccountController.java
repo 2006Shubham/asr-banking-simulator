@@ -6,6 +6,7 @@ import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.dto.StatusUpdateRequest;
 import com.asr.asr_banking_simulator.model.Account;
+import com.asr.asr_banking_simulator.model.Customer;
 import com.asr.asr_banking_simulator.repository.AccountRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -66,6 +67,24 @@ public class AccountController {
         return accountDao.getCustomerPortfolioSummary(custId)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * STAGE 5 SUBQUERY: Retrieves high-value accounts exceeding bank average.
+     * Uses SQL Scalar Subquery in WHERE clause via JDBC.
+     */
+    @GetMapping("/high-value")
+    public List<Account> getHighValueAccounts() {
+        return accountDao.findHighValueAccountsAboveAverage();
+    }
+
+    /**
+     * STAGE 5 SUBQUERY: Retrieves customers who hold accounts but have never opened an FD.
+     * Uses SQL EXISTS + NOT EXISTS anti-join via JDBC.
+     */
+    @GetMapping("/deposit-only-customers")
+    public List<Customer> getDepositOnlyCustomers() {
+        return accountDao.findDepositOnlyCustomers();
     }
 
     /**
