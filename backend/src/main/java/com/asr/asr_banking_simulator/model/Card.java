@@ -68,6 +68,7 @@ public class Card {
     public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
     public String getCvvHash() { return cvvHash; }
+    public String getCvv() { return cvvHash; }
     public void setCvvHash(String cvvHash) { this.cvvHash = cvvHash; }
 
     public String getStatus() { return status; }

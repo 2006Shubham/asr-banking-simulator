@@ -70,12 +70,14 @@ public class Loan {
     public void setInterestRate(BigDecimal interestRate) { this.interestRate = interestRate; }
 
     public Integer getDurationMonths() { return durationMonths; }
+    public Integer getTenure() { return durationMonths; }
     public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
 
     public LocalDate getSanctionDate() { return sanctionDate; }
     public void setSanctionDate(LocalDate sanctionDate) { this.sanctionDate = sanctionDate; }
 
     public LocalDate getIssueDate() { return issueDate; }
+    public LocalDate getStartDate() { return issueDate; }
     public void setIssueDate(LocalDate issueDate) { this.issueDate = issueDate; }
 
     public String getStatus() { return status; }

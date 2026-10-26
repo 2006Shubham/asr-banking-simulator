@@ -44,6 +44,7 @@ public class User {
     public void setUserId(String userId) { this.userId = userId; }
 
     public String getUsername() { return username; }
+    public String getUserName() { return username; }
     public void setUsername(String username) { this.username = username; }
 
     public String getPasswordHash() { return passwordHash; }
