@@ -2,6 +2,7 @@ package com.asr.asr_banking_simulator.controller;
 
 import com.asr.asr_banking_simulator.dao.AccountDao;
 import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
+import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.dto.StatusUpdateRequest;
@@ -85,6 +86,14 @@ public class AccountController {
     @GetMapping("/deposit-only-customers")
     public List<Customer> getDepositOnlyCustomers() {
         return accountDao.findDepositOnlyCustomers();
+    }
+
+    /**
+     * STAGE 8 VIEW: Retrieves branch liquidity metrics from the virtual view `view_branch_liquidity_summary`.
+     */
+    @GetMapping("/views/branch-liquidity")
+    public List<BranchLiquidityDto> getBranchLiquidityFromView() {
+        return accountDao.findBranchLiquidityFromView();
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.asr.asr_banking_simulator.dao;
 
 import com.asr.asr_banking_simulator.dto.AccountTypeSummaryDto;
+import com.asr.asr_banking_simulator.dto.BranchLiquidityDto;
 import com.asr.asr_banking_simulator.dto.CustomerAccountBranchDto;
 import com.asr.asr_banking_simulator.dto.CustomerPortfolioSummaryDto;
 import com.asr.asr_banking_simulator.model.Account;
@@ -574,6 +575,44 @@ public class AccountDao {
 
         } catch (SQLException e) {
             throw new RuntimeException("Database error executing findDepositOnlyCustomers: " + e.getMessage(), e);
+        }
+
+        return list;
+    }
+
+    /**
+     * STAGE 8: QUERYING VIRTUAL DATABASE VIEWS
+     * ============================================================================
+     * Educational Purpose (DBMS Mini-Project):
+     * Directly queries the pre-computed SQL View `view_branch_liquidity_summary`.
+     * The view encapsulates the underlying multi-table LEFT JOIN and GROUP BY
+     * aggregations, demonstrating Logical Data Independence in the ANSI-SPARC model.
+     * ============================================================================
+     */
+    public List<BranchLiquidityDto> findBranchLiquidityFromView() {
+        String sql = "SELECT branch_id, branch_name, city, total_accounts, total_deposits, avg_account_balance "
+                   + "FROM view_branch_liquidity_summary "
+                   + "ORDER BY total_deposits DESC";
+
+        List<BranchLiquidityDto> list = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                BranchLiquidityDto dto = new BranchLiquidityDto();
+                dto.setBranchId(rs.getString("branch_id"));
+                dto.setBranchName(rs.getString("branch_name"));
+                dto.setCity(rs.getString("city"));
+                dto.setTotalAccounts(rs.getLong("total_accounts"));
+                dto.setTotalDeposits(rs.getBigDecimal("total_deposits"));
+                dto.setAvgAccountBalance(rs.getBigDecimal("avg_account_balance"));
+                list.add(dto);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error executing findBranchLiquidityFromView: " + e.getMessage(), e);
         }
 
         return list;
