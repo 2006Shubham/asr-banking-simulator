@@ -5,7 +5,7 @@ const TrustStats = () => {
   const stats = [
     {
       value: "₹500 Cr+",
-      label: "Simulated Assets Under Management",
+      label: "Assets Under Management",
       desc: "Robust capital reserve modeling",
     },
     {
@@ -20,8 +20,8 @@ const TrustStats = () => {
     },
     {
       value: "10+",
-      label: "Normalized Relational Entities",
-      desc: "Strict foreign key referential integrity",
+      label: "Multi-Tier Core Architecture",
+      desc: "High-throughput transactional consistency",
     },
   ];
 

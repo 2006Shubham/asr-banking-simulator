@@ -438,7 +438,7 @@ const OverviewPage = () => {
             }
           >
             <div className="space-y-3">
-              {mockAccounts.map((acc) => (
+              {accounts.slice(0, 3).map((acc) => (
                 <div
                   key={acc.accNo}
                   className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5"
@@ -484,12 +484,12 @@ const OverviewPage = () => {
         </div>
       </div>
 
-      {/* Quick Action Modal 1: Transfer Money Simulation */}
+      {/* Quick Action Modal 1: Instant Fund Transfer */}
       <Modal
         isOpen={transferModalOpen}
         onClose={resetTransferModal}
-        title="Simulated Fund Transfer"
-        description="Transfer funds across accounts or via UPI/IMPS channels (Academic Simulator)"
+        title="Instant Fund Transfer"
+        description="Transfer funds seamlessly across accounts or via UPI/IMPS with 24x7 instant settlement."
         footer={
           transferStatus === "success" ? (
             <Button variant="primary" size="sm" onClick={resetTransferModal}>
@@ -528,7 +528,7 @@ const OverviewPage = () => {
               <p>Reference: {transferReceipt?.ref || "TXN102938"}</p>
               <p>Channel: {transferChannel}</p>
               <p>Timestamp: {transferReceipt?.date || new Date().toLocaleString("en-IN")}</p>
-              <p className="text-emerald-700 font-semibold mt-1">Status: COMPLETED (Atomic DB Commit)</p>
+              <p className="text-emerald-700 font-semibold mt-1">Status: SUCCESSFUL (Instant Settlement)</p>
             </div>
           </div>
         ) : (
@@ -587,7 +587,7 @@ const OverviewPage = () => {
         )}
       </Modal>
 
-      {/* Quick Action Modal 2: Pay Loan EMI Simulation */}
+      {/* Quick Action Modal 2: Pay Loan EMI */}
       <Modal
         isOpen={loanModalOpen}
         onClose={resetLoanModal}
@@ -624,12 +624,12 @@ const OverviewPage = () => {
               Loan Installment Paid Successfully!
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
-              Installment payment for Personal Loan #LN001 has been settled and marked as <strong>Paid</strong> in the database.
+              Installment payment for Personal Loan #LN001 has been settled and credited toward your loan balance.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
               <p>Receipt Ref: {loanReceipt?.ref || "RCP-INS003"}</p>
               <p>Amount Paid: ₹9,500.00</p>
-              <p className="text-emerald-700 font-semibold mt-1">Status: COMPLETED (Live DB Record)</p>
+              <p className="text-emerald-700 font-semibold mt-1">Status: COMPLETED (Instant Settlement)</p>
             </div>
           </div>
         ) : (

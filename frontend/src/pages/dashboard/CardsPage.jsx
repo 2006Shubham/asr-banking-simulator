@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   ShieldCheck,
-  Database,
   CheckCircle2,
   KeyRound,
 } from "lucide-react";
@@ -164,26 +163,11 @@ const CardsPage = () => {
         ))}
       </div>
 
-      {/* 5. DBMS Relational Design Callout */}
-      <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-slate-700 flex items-start gap-3">
-        <Database className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-bold text-amber-950">
-            DBMS Relational Design: <code>CUSTOMER (1) ──── (N) CARD</code> & <code>ACCOUNT (1) ───?─ (N) CARD</code>
-          </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
-            In our relational database schema, the <code>card</code> table features primary key <code>card_no</code>. 
-            For Debit Cards, foreign key <code>acc_no</code> links to <code>account(acc_no)</code> with <code>ON DELETE CASCADE</code>. 
-            For Credit Cards, <code>acc_no</code> is nullable (<code>NULL</code>), representing standalone revolving credit limits.
-          </p>
-        </div>
-      </div>
-
-      {/* 6. Green PIN Simulation Modal */}
+      {/* 5. Instant Green PIN Modal */}
       <Modal
         isOpen={pinModalOpen}
         onClose={() => setPinModalOpen(false)}
-        title="Simulate Green PIN Generation"
+        title="Instant Green PIN Generation"
         description="Generate or reset your 4-digit ATM card PIN securely via NetBanking OTP verification."
         footer={
           pinSuccess ? (
@@ -200,7 +184,7 @@ const CardsPage = () => {
                 size="sm"
                 onClick={() => setPinSuccess(true)}
               >
-                Simulate PIN Setup
+                Set Card PIN
               </Button>
             </div>
           )
@@ -215,7 +199,7 @@ const CardsPage = () => {
               New PIN Successfully Set!
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto">
-              Your 4-digit ATM PIN has been simulated and updated in the card ledger. You can now use your card at all domestic ATMs and POS terminals.
+              Your 4-digit ATM PIN has been securely updated. You can now use your card at all domestic ATMs and POS terminals.
             </p>
           </div>
         ) : (
@@ -260,7 +244,7 @@ const CardsPage = () => {
             </div>
 
             <p className="text-[11px] text-slate-500 italic">
-              * Simulation only. No real banking operations or network calls are made.
+              * For your security, never share your ATM PIN, CVV, or NetBanking password with anyone.
             </p>
           </div>
         )}

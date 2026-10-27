@@ -58,7 +58,7 @@ const AboutPage = () => {
           <SectionHeading
             title="About ASR Bank"
             subtitle="The intersection of reliable Indian banking principles and rigorous computer science engineering."
-            badge={<Badge variant="info">DBMS Mini-Project</Badge>}
+            badge={<Badge variant="info">Digital Core Banking</Badge>}
             action={
               <Link to="/products">
                 <Button variant="outline" size="sm">
@@ -73,13 +73,13 @@ const AboutPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-4">
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-              An Academic Full-Stack Banking Simulation
+              Enterprise Full-Stack Banking Architecture
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed">
-              <strong>ASR Bank</strong> is a modern banking web application engineered to demonstrate
-              practical Database Management System (DBMS) concepts. While inspired by the clean layout
-              and customer reliability of premier Indian financial institutions, ASR Bank possesses
-              its own distinct brand identity—<strong>Aapka Secure Rasta</strong>.
+              <strong>ASR Bank</strong> is an enterprise banking platform engineered to provide reliable,
+              high-performance retail financial services with uncompromising transactional integrity.
+              Inspired by premier Indian financial institutions, ASR Bank delivers on its
+              foundational promise—<strong>Aapka Secure Rasta</strong>.
             </p>
             <p className="text-sm text-slate-600 leading-relaxed">
               Rather than simulating surface-level mockups, ASR Bank models internal banking mechanics:
@@ -125,10 +125,10 @@ const AboutPage = () => {
         <div className="space-y-6">
           <div className="border-b border-slate-200 pb-3">
             <h3 className="text-lg font-bold text-slate-900">
-              Technical & DBMS Architecture
+              Technical & Database Architecture
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              Core database management concepts demonstrated throughout the system
+              Core transactional engineering principles implemented throughout the platform
             </p>
           </div>
 
@@ -182,7 +182,7 @@ const AboutPage = () => {
           <div className="space-y-1 text-center sm:text-left">
             <h4 className="text-lg font-bold">Explore the Customer Experience</h4>
             <p className="text-xs text-blue-200">
-              Log in to the NetBanking simulator to view live mock accounts, statements, and loans.
+              Log in to NetBanking to manage your accounts, transactions, and investments.
             </p>
           </div>
           <Link to="/login" className="shrink-0">
@@ -191,7 +191,7 @@ const AboutPage = () => {
               size="md"
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold border-none"
             >
-              Access NetBanking Demo
+              Access NetBanking
             </Button>
           </Link>
         </div>

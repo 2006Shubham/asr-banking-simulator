@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   CalendarCheck,
-  Database,
   Calculator,
   PlusCircle,
   CheckCircle2,
@@ -239,22 +238,7 @@ const FDPage = () => {
         </div>
       </div>
 
-      {/* 4. DBMS Relational Concept Callout */}
-      <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs text-slate-700 flex items-start gap-3">
-        <Database className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-bold text-emerald-950">
-            DBMS Relational Design: <code>FIXED_DEPOSIT (1) ──── (N) FD_INTEREST</code>
-          </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
-            In our database schema, each interest record maintains a referential integrity constraint pointing to 
-            <code>fixed_deposit(fd_id)</code> with <code>ON DELETE CASCADE</code>. Each record captures the 
-            <code>calc_date</code>, <code>payout_date</code>, and settlement status (<code>Pending</code> or <code>Credited</code>).
-          </p>
-        </div>
-      </div>
-
-      {/* 5. Fixed Deposit Simulator Calculator Modal */}
+      {/* 4. Fixed Deposit Yield Calculator Modal */}
       <Modal
         isOpen={calculatorOpen}
         onClose={() => setCalculatorOpen(false)}
@@ -371,7 +355,7 @@ const FDPage = () => {
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
               Your new Fixed Deposit contract <strong>#{createdFd?.fdId}</strong> for{" "}
-              <strong>{formatCurrency(createdFd?.amount || 0)}</strong> has been booked and saved in the database.
+              <strong>{formatCurrency(createdFd?.amount || 0)}</strong> has been booked and confirmed.
             </p>
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 text-left space-y-1.5">
               <div className="flex justify-between">

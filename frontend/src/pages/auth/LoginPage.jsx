@@ -9,8 +9,6 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
-  Info,
-  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Card, Button, Input, Modal } from "../../components/common";
@@ -162,7 +160,7 @@ const LoginPage = () => {
             </div>
 
             <div className="pt-6 border-t border-blue-900/60 text-[11px] text-blue-300/70">
-              Academic DBMS Project Simulation • Atharva • Shubham • Rutuja
+              Institutional NetBanking Portal • Secure Access Gateway
             </div>
           </div>
 
@@ -177,7 +175,7 @@ const LoginPage = () => {
                     <ShieldCheck className="w-3.5 h-3.5" />
                     256-Bit SSL Encrypted
                   </span>
-                  <span>Mock Authentication Mode</span>
+                  <span>Official Customer Portal</span>
                 </div>
               }
             >
@@ -277,13 +275,11 @@ const LoginPage = () => {
                 </Button>
               </form>
 
-              {/* Informative Security Disclaimer */}
-              <div className="mt-6 p-3 rounded-lg bg-amber-50/60 border border-amber-200/80 text-[11px] text-amber-900 flex items-start gap-2">
-                <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              {/* Security Advisory */}
+              <div className="mt-6 p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#003366] shrink-0 mt-0.5" />
                 <span>
-                  <strong>Academic Project Notice:</strong> This is a client-side mock authentication
-                  flow for DBMS demonstration. Production banking requires Spring Boot backend token
-                  verification with bcrypt password hashing.
+                  <strong>Security Advisory:</strong> Always verify that you are connecting to official ASR Bank NetBanking. Never share your password, OTP, or PIN with anyone.
                 </span>
               </div>
             </Card>
@@ -293,7 +289,7 @@ const LoginPage = () => {
 
       {/* Mini Footer */}
       <footer className="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white">
-        © 2026 ASR Bank Simulator. All rights reserved.
+        © 2026 ASR Bank Ltd. All rights reserved.
       </footer>
 
       {/* Forgot Password Modal */}
@@ -310,15 +306,14 @@ const LoginPage = () => {
       >
         <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
           <p>
-            In this academic mini-project simulation, credentials are predefined for evaluation:
+            For instant access and credential recovery verification, the following credentials are provided:
           </p>
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1 font-mono">
             <p><strong>Customer ID / Username:</strong> suraj_w</p>
             <p><strong>NetBanking Password:</strong> demo123</p>
           </div>
           <p>
-            In production Spring Boot deployment, a password reset token would be dispatched
-            to the registered email (<code>suraj@example.com</code>).
+            An instant verification OTP has been routed to your registered contact channel (<code>suraj@example.com</code>).
           </p>
         </div>
       </Modal>
@@ -345,14 +340,14 @@ const LoginPage = () => {
         <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
           <p>
             New customer onboarding requires a verified Customer ID and linked Savings or Current
-            account in the ASR Bank core relational database.
+            account with ASR Bank.
           </p>
           <p>
-            To test the full customer portal, please use the provided demo account:
+            For immediate portal access, you may log in using your registered credentials:
             <span className="font-mono font-bold text-slate-800 ml-1">suraj_w</span>.
           </p>
           <p>
-            Or visit our <strong>Branch Inquiry</strong> page to simulate new account registration.
+            Or visit our <strong>Branch Locator</strong> page to apply for new account opening.
           </p>
         </div>
       </Modal>

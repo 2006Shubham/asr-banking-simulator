@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   ShieldCheck,
   CheckCircle2,
-  Database,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import loanService from "../../services/loanService";
@@ -184,22 +183,7 @@ const LoansPage = () => {
         </div>
       </div>
 
-      {/* DBMS Concept Callout */}
-      <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-slate-700 flex items-start gap-3">
-        <Database className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-bold text-amber-900">
-            DBMS Relational Design: <code>LOAN (1) ──── (N) LOAN_INSTALLMENT</code>
-          </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
-            In our relational schema, each installment row references <code>loan(loan_id)</code> with 
-            <code>ON DELETE CASCADE</code>. Composite unique key constraint <code>UNIQUE (loan_id, installment_no)</code> 
-            prevents duplicate scheduled EMIs.
-          </p>
-        </div>
-      </div>
-
-      {/* EMI Repayment Simulation Modal */}
+      {/* EMI Repayment Modal */}
       <Modal
         isOpen={paymentModalOpen}
         onClose={handleCloseModal}
@@ -238,7 +222,7 @@ const LoansPage = () => {
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto">
               EMI #{selectedInstallment?.installmentNo} of{" "}
-              <strong>{formatCurrency(selectedInstallment?.amount || 0)}</strong> has been settled and marked as <strong>Paid</strong> in the database.
+              <strong>{formatCurrency(selectedInstallment?.amount || 0)}</strong> has been settled and marked as <strong>Paid</strong> and credited to your loan balance.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left space-y-1">
               <p>Receipt ID: {paymentReceipt?.id || "RCP-EMI-104928"}</p>
@@ -272,7 +256,7 @@ const LoansPage = () => {
             <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-[#003366] shrink-0 mt-0.5" />
               <span>
-                Simulated settlement: Funds will be debited from your primary Savings Account (<code>{maskAccountNumber("ACC001")}</code>).
+                Auto-debit authorization: Funds will be debited directly from your primary Savings Account (<code>{maskAccountNumber("ACC001")}</code>).
               </span>
             </div>
           </div>

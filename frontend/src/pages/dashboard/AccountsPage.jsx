@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  ShieldCheck,
   Send,
   CheckCircle2,
 } from "lucide-react";
@@ -186,26 +185,12 @@ const AccountsPage = () => {
         </div>
       </div>
 
-      {/* Academic DBMS Schema Notice */}
-      <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200/80 text-xs text-slate-700 flex items-start gap-3">
-        <ShieldCheck className="w-5 h-5 text-[#003366] shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-bold text-[#003366]">
-            DBMS Relational Mapping: <code>CUSTOMER (1) ──── (N) ACCOUNT</code>
-          </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
-            In our database model, accounts maintain a strict foreign key relation to <code>customer(cust_id)</code>.
-            Balances are maintained as <code>DECIMAL(15, 2)</code> with non-negative check constraints.
-          </p>
-        </div>
-      </div>
-
-      {/* Simulated Fund Transfer Modal */}
+      {/* Instant Fund Transfer Modal */}
       <Modal
         isOpen={transferModalOpen}
         onClose={() => setTransferModalOpen(false)}
-        title="Simulated Fund Transfer"
-        description="Transfer funds across accounts or via UPI/IMPS (Simulator Mode)"
+        title="Instant Fund Transfer"
+        description="Transfer funds securely across accounts or via UPI/IMPS with 24x7 instant settlement."
         footer={
           transferSuccess ? (
             <Button variant="primary" size="sm" onClick={() => setTransferModalOpen(false)}>
@@ -229,11 +214,11 @@ const AccountsPage = () => {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h4 className="text-base font-bold text-slate-900">
-              Transfer Simulated Successfully!
+              Transfer Completed Successfully!
             </h4>
             <p className="text-xs text-slate-600 max-w-sm mx-auto">
-              Simulated transfer of <strong>{formatCurrency(Number(transferAmount))}</strong> to{" "}
-              <strong>{transferBeneficiary}</strong> via {transferChannel}.
+              Fund transfer of <strong>{formatCurrency(Number(transferAmount))}</strong> to{" "}
+              <strong>{transferBeneficiary}</strong> via {transferChannel} has been processed.
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono text-slate-600 text-left">
               <p>Reference: {transferReceipt?.ref || "TXN829104"}</p>

@@ -8,7 +8,6 @@ import {
   MapPin,
   Building,
   Lock,
-  Database,
   Fingerprint,
   BadgeCheck,
   EyeOff,
@@ -364,21 +363,6 @@ const ProfilePage = () => {
           </div>
         </div>
       </Card>
-
-      {/* 4. DBMS Relational Design Callout */}
-      <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-slate-700 flex items-start gap-3">
-        <Database className="w-5 h-5 text-[#003366] shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-bold text-[#003366]">
-            DBMS Relational Design: <code>CUSTOMER (1) ──── (N) KYC</code>
-          </p>
-          <p className="text-[11px] text-slate-600 leading-relaxed">
-            In our relational database model, <code>CUSTOMER</code> acts as the root master table with primary key <code>cust_id</code>. 
-            The <code>KYC</code> entity holds regulatory verification records linked via foreign key <code>cust_id</code> with 
-            <code>ON DELETE CASCADE</code>. Each record preserves <code>kyc_type</code>, <code>verified_on</code>, and <code>verified_by</code> for compliance audit logging.
-          </p>
-        </div>
-      </div>
     </div>
   );
 };

@@ -116,7 +116,7 @@ const ProductsPage = () => {
         "NFC Contactless Tap & Pay for everyday merchant purchases",
         "Instant card lock/unlock and online usage toggles via NetBanking",
         "Masked CVV and card numbers in customer dashboards for privacy",
-        "Comprehensive fraud coverage simulation and zero lost-card liability",
+        "Comprehensive fraud protection and zero lost-card liability",
         "Up to 45 days interest-free credit period on credit card variants",
       ],
       idealFor: "Online shoppers, travelers, and secure digital payment users.",
@@ -251,7 +251,7 @@ const ProductsPage = () => {
             <ShieldCheck className="w-8 h-8 text-emerald-600 shrink-0" />
             <div>
               <h4 className="text-sm font-bold text-slate-900">
-                Institutional Banking Simulation
+                Institutional Banking Standards
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">
                 All financial interest calculations and loan amortization schedules strictly mirror
@@ -261,7 +261,7 @@ const ProductsPage = () => {
           </div>
           <Link to="/about">
             <Button variant="secondary" size="sm">
-              Read Project Architecture
+              About Our Architecture
             </Button>
           </Link>
         </div>

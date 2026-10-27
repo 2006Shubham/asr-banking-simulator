@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   Download,
-  Database,
 } from "lucide-react";
 import transactionService from "../../services/transactionService";
 import { formatCurrency } from "../../utils/formatters";
@@ -124,6 +123,30 @@ const TransactionsPage = () => {
     setFilterAccount("ALL");
   };
 
+  const handleExportCSV = () => {
+    if (!filteredTransactions.length) return;
+    const headers = ["Txn ID", "Account No", "Type", "Amount", "Channel", "Status", "Reference No", "Date", "Description"];
+    const rows = filteredTransactions.map((t) => [
+      t.txnId,
+      t.accNo,
+      t.txnType,
+      t.amount,
+      t.channel,
+      t.status,
+      t.refNo,
+      t.txnDate,
+      `"${(t.description || "").replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `ASR_Bank_Statement_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleSelectTransaction = (txn) => {
     setSelectedTxn(txn);
     setDetailsModalOpen(true);
@@ -149,7 +172,7 @@ const TransactionsPage = () => {
             variant="outline"
             size="sm"
             icon={Download}
-            onClick={() => alert("Simulation: Statement CSV export downloaded.")}
+            onClick={handleExportCSV}
           >
             Export Statement
           </Button>
@@ -220,20 +243,6 @@ const TransactionsPage = () => {
           onPageChange={setCurrentPage}
           onSelectTransaction={handleSelectTransaction}
         />
-      </div>
-
-      {/* Academic Relational Schema Indicator */}
-      <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 flex items-start gap-3">
-        <Database className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="font-semibold text-slate-800">
-            DBMS Concept: <code>ACCOUNT (1) ──── (N) TRANSACTION</code>
-          </p>
-          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-            Every transaction row records a ledger entry tied to <code>acc_no</code> with audit metadata:
-            amount, transaction type (Credit/Debit), payment channel (UPI, NEFT, IMPS), and a unique reference number constraint.
-          </p>
-        </div>
       </div>
 
       {/* Transaction Receipt Modal */}

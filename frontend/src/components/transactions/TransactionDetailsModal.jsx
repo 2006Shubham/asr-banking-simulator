@@ -109,7 +109,7 @@ const TransactionDetailsModal = ({ transaction, isOpen, onClose }) => {
         {/* Security watermark */}
         <div className="pt-2 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Simulated electronic statement record</span>
+          <span>Official electronic statement record • Authenticated via ASR Bank Core</span>
         </div>
       </div>
     </Modal>

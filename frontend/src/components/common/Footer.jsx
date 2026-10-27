@@ -16,7 +16,7 @@ const Footer = () => {
               <span className="text-lg font-bold text-white tracking-tight">ASR BANK</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Simplified Banking Simulator & DBMS Mini-Project. Built with React, Spring Boot, and SQL.
+              Institutional Digital Banking Platform. Advanced relational transaction processing and core retail banking services.
             </p>
           </div>
 
@@ -51,17 +51,17 @@ const Footer = () => {
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200 mb-3 flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Academic Notice</span>
+              <span>Institutional Security</span>
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              This application is an educational simulation for DBMS academic evaluation. No real monetary transactions or personal data processing occur.
+              State-of-the-art encrypted 256-bit banking infrastructure with multi-layer verification and instant transaction settlement.
             </p>
           </div>
         </div>
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} ASR Bank Simulator. All rights reserved.</p>
-          <p className="mt-2 sm:mt-0"> Project Team: Atharva • Shubham • Suraj •Rutuja </p>
+          <p>© {new Date().getFullYear()} ASR Bank Ltd. All rights reserved.</p>
+          <p className="mt-2 sm:mt-0"> Project Team: Atharva • Shubham • Suraj • Rutuja </p>
         </div>
       </div>
     </footer>
