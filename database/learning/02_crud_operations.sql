@@ -127,7 +127,6 @@ WHERE acc_no = 'ACC999';
 -- ============================================================================
 -- Scenario C: Soft Delete (Banking Industry Best Practice)
 -- ============================================================================
--- Instead of destroying audit trails, banks perform a "Soft Delete" by flipping
 -- the status to 'Closed'. All historical transactions remain intact and valid.
 -- ============================================================================
 
