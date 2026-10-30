@@ -62,19 +62,19 @@ const LoginPage = () => {
   };
 
   const handleFillCustomer = () => {
-    setUsername("suraj_w");
+    setUsername("rutuja_p");
     setPassword("demo123");
     setError("");
   };
 
   const handleFillEmployee = () => {
-    setUsername("pooja_acc");
+    setUsername("shubham_emp");
     setPassword("demo123");
     setError("");
   };
 
   const handleFillManager = () => {
-    setUsername("rajesh_mgr");
+    setUsername("atharva_mgr");
     setPassword("demo123");
     setError("");
   };
@@ -138,8 +138,8 @@ const LoginPage = () => {
                     className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
                   >
                     <div>
-                      <span className="font-semibold text-white">suraj_w</span>
-                      <span className="text-[10px] text-blue-300 ml-2">Suraj Walke</span>
+                      <span className="font-semibold text-white">rutuja_p</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Rutuja Peherkar</span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-200 font-bold">
                       CUSTOMER
@@ -152,8 +152,8 @@ const LoginPage = () => {
                     className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
                   >
                     <div>
-                      <span className="font-semibold text-white">pooja_acc</span>
-                      <span className="text-[10px] text-blue-300 ml-2">Pooja Patil</span>
+                      <span className="font-semibold text-white">shubham_emp</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Shubham Deshmukh</span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-900 text-emerald-200 font-bold">
                       EMPLOYEE
@@ -166,8 +166,8 @@ const LoginPage = () => {
                     className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
                   >
                     <div>
-                      <span className="font-semibold text-white">rajesh_mgr</span>
-                      <span className="text-[10px] text-blue-300 ml-2">Rajesh Sharma</span>
+                      <span className="font-semibold text-white">atharva_mgr</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Atharva Wadekar</span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900 text-amber-200 font-bold">
                       MANAGER
@@ -234,7 +234,7 @@ const LoginPage = () => {
                   name="username"
                   id="username"
                   required
-                  placeholder="e.g. suraj_w, pooja_acc, or rajesh_mgr"
+                  placeholder="e.g. rutuja_p, shubham_emp, or atharva_mgr"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);

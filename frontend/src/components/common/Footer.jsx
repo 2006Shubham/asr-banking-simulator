@@ -61,7 +61,7 @@ const Footer = () => {
 
         <div className="pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
           <p>© {new Date().getFullYear()} ASR Bank Ltd. All rights reserved.</p>
-          <p className="mt-2 sm:mt-0"> Project Team: Atharva • Shubham • Suraj • Rutuja </p>
+          <p className="mt-2 sm:mt-0"> Project Team: Rutuja Peherkar • Suraj Wakhure • Atharva Wadekar • Shubham Deshmukh </p>
         </div>
       </div>
     </footer>

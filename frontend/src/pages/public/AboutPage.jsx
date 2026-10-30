@@ -15,19 +15,24 @@ import { Card, SectionHeading, Badge, Button } from "../../components/common";
 const AboutPage = () => {
   const teamMembers = [
     {
-      name: "Atharva Wadekar",
+      name: "Rutuja Peherkar",
+      role: "Lead Architect & UI/UX Specialist",
+      focus: "React Client Architecture, State Design & NetBanking Experience",
+    },
+    {
+      name: "Suraj Wakhure",
       role: "Backend & Database Architect",
-      focus: "Relational Schemas, Referential Integrity & Data Modeling",
+      focus: "Relational Modeling, MySQL Triggers, Stored Procedures & Integrity",
+    },
+    {
+      name: "Atharva Wadekar",
+      role: "Systems & Security Engineer",
+      focus: "Spring Boot Microservices, REST APIs & Role-Based Authorization",
     },
     {
       name: "Shubham Deshmukh",
-      role: "Full-Stack & Systems Engineer",
-      focus: "Spring Boot Microservices, REST APIs & Enterprise Logic",
-    },
-    {
-      name: "Rutuja",
-      role: "Frontend & UI/UX Architect",
-      focus: "React Architecture, Design System & NetBanking Client",
+      role: "Full-Stack Integration Engineer",
+      focus: "Inquiry Escalation Workflows, Financial Ledgers & Core Operations",
     },
   ];
 
@@ -157,7 +162,7 @@ const AboutPage = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {teamMembers.map((member, idx) => (
               <Card key={idx} padding="md" className="border-slate-200">
                 <div className="w-10 h-10 rounded-full bg-blue-50 text-[#003366] flex items-center justify-center font-bold mb-3">
