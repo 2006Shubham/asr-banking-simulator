@@ -235,14 +235,16 @@ public class InquiryController {
     }
 
     @GetMapping("/employee/customers/search")
-    public List<Customer> searchCustomers(@RequestParam String query) {
-        String cleanQuery = query.trim().toLowerCase();
+    public List<Customer> searchCustomers(@RequestParam(required = false, defaultValue = "") String query) {
+        String cleanQuery = query == null ? "" : query.trim().toLowerCase();
+        if (cleanQuery.isEmpty()) {
+            return customerRepo.findAll();
+        }
         return customerRepo.findAll().stream()
-                .filter(c -> c.getCustId().toLowerCase().contains(cleanQuery) ||
-                             c.getName().toLowerCase().contains(cleanQuery) ||
-                             c.getPhone().contains(cleanQuery) ||
-                             c.getEmail().toLowerCase().contains(cleanQuery))
-                .limit(10)
+                .filter(c -> (c.getCustId() != null && c.getCustId().toLowerCase().contains(cleanQuery)) ||
+                             (c.getName() != null && c.getName().toLowerCase().contains(cleanQuery)) ||
+                             (c.getPhone() != null && c.getPhone().contains(cleanQuery)) ||
+                             (c.getEmail() != null && c.getEmail().toLowerCase().contains(cleanQuery)))
                 .toList();
     }
 
