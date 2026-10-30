@@ -172,7 +172,7 @@ const TransactionsPage = () => {
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <SectionHeading
-        title="Transaction Statements"
+        title="Transaction History"
         subtitle="Search, filter, and inspect debits, credits, and multi-channel payment ledger records."
         badge={
           <Badge variant="info" size="sm">
@@ -186,7 +186,7 @@ const TransactionsPage = () => {
             icon={Download}
             onClick={handleExportCSV}
           >
-            Export Statement
+            Download Statement
           </Button>
         }
       />

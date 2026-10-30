@@ -78,7 +78,8 @@ const ProfilePage = () => {
             {profile.name
               ?.split(" ")
               .map((n) => n[0])
-              .join("") || "SW"}
+              .join("")
+              .slice(0, 2) || "CP"}
           </div>
           <div>
             <div className="flex items-center gap-2">

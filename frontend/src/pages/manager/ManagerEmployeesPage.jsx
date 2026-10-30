@@ -83,7 +83,7 @@ export default function ManagerEmployeesPage() {
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Workload (Excel)</span>
+            <span>Download Staff Workload (CSV/Excel)</span>
           </button>
         </div>
       </div>

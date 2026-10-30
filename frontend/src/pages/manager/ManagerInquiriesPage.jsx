@@ -16,8 +16,8 @@ const STATUS_STYLES = {
 };
 
 const TABS = [
-  { key: "all_branch", label: "All Branch Cases" },
-  { key: "escalated", label: "Escalated Cases" },
+  { key: "all_branch", label: "All Branch Inquiries" },
+  { key: "escalated", label: "Escalated Inquiries" },
   { key: "queue", label: "Unassigned Queue" },
 ];
 
@@ -208,8 +208,21 @@ export default function ManagerInquiriesPage() {
           {error}
         </div>
       ) : inquiries.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200 text-slate-500">
-          No inquiries found for this filter
+        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+          <p className="text-slate-600 font-medium">
+            {activeTab === "queue"
+              ? "No unassigned inquiries"
+              : activeTab === "escalated"
+              ? "No escalated inquiries"
+              : "No inquiries recorded"}
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            {activeTab === "queue"
+              ? "All customer inquiries for this branch have been assigned to active staff members."
+              : activeTab === "escalated"
+              ? "No inquiry tickets are currently marked as escalated."
+              : "No customer inquiries are currently listed under this category."}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

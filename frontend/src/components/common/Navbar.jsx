@@ -4,8 +4,7 @@ import { Landmark, Lock, Menu, X } from "lucide-react";
 
 /**
  * ASR Bank - Public Header & Navigation Bar
- * Features brand logo, desktop navigation with active state indicator,
- * mobile drawer toggle, and prominent NetBanking login button.
+ * Clean, modern banking header with direct links and NetBanking CTA.
  */
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -18,20 +17,20 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="bg-[#00284d] text-white border-b border-blue-900/50 sticky top-0 z-50 shadow-sm">
+    <header className="sticky top-0 z-50 bg-[#00284d] text-white shadow-md border-b border-blue-900/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Bank Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs group-hover:bg-blue-500 transition">
-              <Landmark className="w-6 h-6" />
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-md">
+              <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
             </div>
             <div>
-              <span className="text-xl font-bold tracking-tight text-white font-sans">
+              <span className="text-xl font-extrabold tracking-tight text-white font-sans leading-none block">
                 ASR BANK
               </span>
-              <span className="block text-[9px] uppercase tracking-widest text-blue-200/80 font-medium">
-                Aapka Secure Rasta
+              <span className="text-[9px] uppercase tracking-widest text-amber-300 font-semibold mt-0.5 block">
+                Your Trust, Our Priority
               </span>
             </div>
           </Link>
@@ -46,8 +45,8 @@ const Navbar = () => {
                 className={({ isActive }) =>
                   `text-sm font-medium transition-colors py-1 ${
                     isActive
-                      ? "text-white border-b-2 border-amber-400 font-semibold"
-                      : "text-blue-100/80 hover:text-white"
+                      ? "text-amber-400 border-b-2 border-amber-400 font-semibold"
+                      : "text-blue-100 hover:text-white"
                   }`
                 }
               >
@@ -56,20 +55,20 @@ const Navbar = () => {
             ))}
           </nav>
 
-          {/* NetBanking Login CTA & Mobile Toggle */}
+          {/* Right Action: NetBanking CTA */}
           <div className="flex items-center gap-3">
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-lg text-sm font-semibold shadow-xs transition"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 px-4 py-2 rounded-xl text-sm font-bold shadow-md transition transform active:scale-95 cursor-pointer"
             >
-              <Lock className="w-4 h-4 text-slate-900" />
+              <Lock className="w-4 h-4 text-slate-950" />
               <span>NetBanking</span>
             </Link>
 
             {/* Mobile menu hamburger button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg text-blue-200 hover:text-white hover:bg-blue-900/50 transition focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="md:hidden p-2 rounded-lg text-blue-200 hover:text-white hover:bg-blue-900/50 transition focus:outline-none"
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -77,26 +76,37 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
+        {/* Mobile menu dropdown drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-3 border-t border-blue-900/40 space-y-1">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.name}
-                to={link.path}
-                end={link.path === "/"}
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `block px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive
-                      ? "bg-blue-800 text-white font-semibold"
-                      : "text-blue-100 hover:bg-blue-900/40 hover:text-white"
-                  }`
-                }
-              >
-                {link.name}
-              </NavLink>
-            ))}
+          <div className="md:hidden py-4 border-t border-blue-900/60 bg-[#002244] animate-fadeIn">
+            <nav className="flex flex-col gap-2 px-2">
+              {navLinks.map((link) => (
+                <NavLink
+                  key={link.name}
+                  to={link.path}
+                  end={link.path === "/"}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-lg text-sm font-medium transition ${
+                      isActive
+                        ? "bg-blue-800 text-amber-400 font-semibold"
+                        : "text-blue-100 hover:bg-blue-900/50 hover:text-white"
+                    }`
+                  }
+                >
+                  {link.name}
+                </NavLink>
+              ))}
+              <div className="pt-2 border-t border-blue-900/60">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-center py-2 bg-amber-400 text-slate-950 font-bold rounded-lg text-sm"
+                >
+                  Login to NetBanking
+                </Link>
+              </div>
+            </nav>
           </div>
         )}
       </div>

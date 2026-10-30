@@ -114,11 +114,11 @@ const AccountsPage = () => {
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <SectionHeading
-        title="Bank Accounts"
-        subtitle="Manage your Savings and Current accounts, view liquidity, and monitor ledger balances."
+        title="My Accounts"
+        subtitle="View your Savings and Current accounts, monitor ledger balances, and initiate fund transfers."
         badge={
           <Badge variant="info" size="sm">
-            {accounts.length} Active Accounts
+            {accounts.length} Active Account{accounts.length !== 1 ? "s" : ""}
           </Badge>
         }
         action={
@@ -191,15 +191,24 @@ const AccountsPage = () => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {accounts.map((account) => (
-            <AccountCard
-              key={account.accNo}
-              account={account}
-              onTransferClick={handleOpenTransfer}
-            />
-          ))}
-        </div>
+        {accounts.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+            <p className="text-slate-600 font-medium">No accounts found</p>
+            <p className="text-xs text-slate-400 mt-1">
+              There are no active bank accounts currently associated with this customer profile.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {accounts.map((account) => (
+              <AccountCard
+                key={account.accNo}
+                account={account}
+                onTransferClick={handleOpenTransfer}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Instant Fund Transfer Modal */}

@@ -161,7 +161,7 @@ const ContactPage = () => {
                       label="Your Full Name"
                       name="name"
                       required
-                      placeholder="e.g. Suraj Wadekar"
+                      placeholder="e.g. Rutuja Peherkar"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />

@@ -10,8 +10,8 @@ import Button from "./Button";
  * @param {Function} onRetry - Optional retry callback
  */
 const ErrorState = ({
-  title = "Something went wrong",
-  message = "We encountered an issue while communicating with the banking server. Please try again.",
+  title = "Unable to Complete Request",
+  message = "The banking service encountered a connection or processing issue. Please try again.",
   onRetry,
   action,
   className = "",

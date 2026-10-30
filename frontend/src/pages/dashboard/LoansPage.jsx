@@ -139,24 +139,50 @@ const LoansPage = () => {
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
             Next Scheduled Repayment
           </span>
-          <p className="text-lg font-bold text-amber-900 font-mono mt-0.5">
-            ₹9,500.00
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Due on 01 Apr 2025 • Personal Loan #LN001
-          </p>
+          {activeLoans.length > 0 ? (
+            <>
+              <p className="text-lg font-bold text-amber-900 font-mono mt-0.5">
+                Active Repayment
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Scheduled installment • Loan #{activeLoans[0].loanId}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-slate-400 mt-0.5">
+                No Pending Repayments
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                No active credit installments due
+              </p>
+            </>
+          )}
         </div>
 
         <div className="border-t sm:border-t-0 sm:border-l border-slate-100 sm:pl-6">
           <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
             Repayment Method
           </span>
-          <p className="text-sm font-bold text-slate-800 mt-0.5">
-            Auto-Debit via Savings A/C
-          </p>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {maskAccountNumber("ACC001")} • No bounce penalties
-          </p>
+          {activeLoans.length > 0 ? (
+            <>
+              <p className="text-sm font-bold text-slate-800 mt-0.5">
+                Auto-Debit via Linked A/C
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Electronic Mandate Active
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-slate-400 mt-0.5">
+                Not Applicable
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">
+                No active mandate required
+              </p>
+            </>
+          )}
         </div>
       </div>
 
@@ -171,16 +197,25 @@ const LoansPage = () => {
           </span>
         </div>
 
-        <div className="space-y-6">
-          {loans.map((loan) => (
-            <LoanCard
-              key={loan.loanId}
-              loan={loan}
-              installments={installmentsMap[loan.loanId] || []}
-              onPayEmi={handleOpenPayEmi}
-            />
-          ))}
-        </div>
+        {loans.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+            <p className="text-slate-600 font-medium">No loans or credit facilities found</p>
+            <p className="text-xs text-slate-400 mt-1">
+              You currently have no active personal or retail borrowing contracts with ASR Bank.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {loans.map((loan) => (
+              <LoanCard
+                key={loan.loanId}
+                loan={loan}
+                installments={installmentsMap[loan.loanId] || []}
+                onPayEmi={handleOpenPayEmi}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* EMI Repayment Modal */}

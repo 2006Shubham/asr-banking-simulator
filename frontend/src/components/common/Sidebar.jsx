@@ -33,31 +33,31 @@ const Sidebar = ({ isOpen = false, onClose }) => {
 
   // Customer navigation items
   const customerNavItems = [
-    { name: "Dashboard",      path: "/dashboard",              icon: LayoutDashboard },
-    { name: "Accounts",       path: "/dashboard/accounts",     icon: Wallet },
-    { name: "Transactions",   path: "/dashboard/transactions", icon: ArrowLeftRight },
-    { name: "Loans",          path: "/dashboard/loans",        icon: BadgePercent },
-    { name: "Fixed Deposits", path: "/dashboard/fd",           icon: PiggyBank },
-    { name: "Cards",          path: "/dashboard/cards",        icon: CreditCard },
-    { name: "Support",        path: "/customer/inquiries",     icon: MessageSquare },
-    { name: "Profile",        path: "/dashboard/profile",      icon: UserCheck },
+    { name: "Overview",           path: "/dashboard",              icon: LayoutDashboard },
+    { name: "My Accounts",        path: "/dashboard/accounts",     icon: Wallet },
+    { name: "Transaction History", path: "/dashboard/transactions", icon: ArrowLeftRight },
+    { name: "Loans & EMIs",       path: "/dashboard/loans",        icon: BadgePercent },
+    { name: "Fixed Deposits",     path: "/dashboard/fd",           icon: PiggyBank },
+    { name: "Cards",              path: "/dashboard/cards",        icon: CreditCard },
+    { name: "Customer Inquiries", path: "/customer/inquiries",     icon: MessageSquare },
+    { name: "Customer Details",   path: "/dashboard/profile",      icon: UserCheck },
   ];
 
   // Employee navigation items
   const employeeNavItems = [
-    { name: "Dashboard",       path: "/employee/dashboard",   icon: LayoutDashboard },
-    { name: "Inquiry Queue",   path: "/employee/inquiries",   icon: ClipboardList },
-    { name: "Customer Lookup", path: "/employee/customers",   icon: Search },
-    { name: "Profile",         path: "/employee/profile",     icon: UserCheck },
+    { name: "Dashboard",          path: "/employee/dashboard",   icon: LayoutDashboard },
+    { name: "Assigned Inquiries", path: "/employee/inquiries",   icon: ClipboardList },
+    { name: "Customer Directory", path: "/employee/customers",   icon: Search },
+    { name: "Staff Profile",      path: "/employee/profile",     icon: UserCheck },
   ];
 
   // Manager navigation items
   const managerNavItems = [
-    { name: "Dashboard",       path: "/manager/dashboard",    icon: LayoutDashboard },
-    { name: "Inquiries",       path: "/manager/inquiries",    icon: ClipboardList },
-    { name: "Staff Workload",  path: "/manager/employees",    icon: Users },
-    { name: "Branch Reports",  path: "/manager/reports",      icon: BarChart3 },
-    { name: "Profile",         path: "/manager/profile",      icon: UserCheck },
+    { name: "Dashboard",          path: "/manager/dashboard",    icon: LayoutDashboard },
+    { name: "Inquiry Oversight",  path: "/manager/inquiries",    icon: ClipboardList },
+    { name: "Staff Workload",     path: "/manager/employees",    icon: Users },
+    { name: "Branch Reports",     path: "/manager/reports",      icon: BarChart3 },
+    { name: "Manager Profile",    path: "/manager/profile",      icon: UserCheck },
   ];
 
   const navItems = isManager()
@@ -117,15 +117,15 @@ const Sidebar = ({ isOpen = false, onClose }) => {
       >
         {/* Brand Header */}
         <div className="p-4 sm:p-5 border-b border-blue-900/40 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-xs">
-              <Landmark className="w-5 h-5" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shrink-0 shadow-sm">
+              <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
             </div>
-            <div>
-              <h1 className="font-bold text-base tracking-tight text-white leading-none">
+            <div className="truncate">
+              <h1 className="font-extrabold text-base tracking-tight text-white leading-none">
                 ASR BANK
               </h1>
-              <p className="text-[10px] uppercase tracking-wider text-blue-300 font-semibold mt-1">
+              <p className="text-[10px] uppercase tracking-wider text-amber-300 font-semibold mt-1">
                 {portalLabel}
               </p>
             </div>

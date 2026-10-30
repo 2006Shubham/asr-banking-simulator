@@ -143,34 +143,34 @@ export default function EmployeeDashboardPage() {
           <div className="flex gap-3 flex-wrap">
             <button
               onClick={() => navigate("/employee/inquiries")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#003366] text-white text-sm font-semibold rounded-lg hover:bg-[#002244] transition shadow-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#003366] text-white text-sm font-semibold rounded-lg hover:bg-[#002244] transition shadow-sm cursor-pointer"
             >
               <ClipboardList className="w-4 h-4" />
-              <span>Go to Inquiry Queue</span>
+              <span>View Assigned Inquiries</span>
             </button>
             <button
               onClick={() => navigate("/employee/customers")}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition"
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition cursor-pointer"
             >
               <Search className="w-4 h-4" />
-              <span>Customer Lookup</span>
+              <span>Customer Directory</span>
             </button>
           </div>
 
           {/* Recent Assigned Cases */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900">My Recent Active Cases</h2>
+              <h2 className="text-sm font-bold text-slate-900">Recent Assigned Inquiries</h2>
               <button
                 onClick={() => navigate("/employee/inquiries")}
-                className="text-xs text-[#003366] font-semibold hover:underline"
+                className="text-xs text-[#003366] font-semibold hover:underline cursor-pointer"
               >
-                View All Cases →
+                View All Inquiries →
               </button>
             </div>
             {recentInquiries.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-sm">
-                No tickets currently assigned to you. Check the Branch Queue to claim new ones.
+                No inquiries are currently assigned to you. Check the Branch Queue to claim available cases.
               </div>
             ) : (
               <div className="overflow-x-auto">

@@ -168,9 +168,9 @@ export default function CustomerInquiriesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Support & Inquiries</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Customer Inquiries</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            Raise and track your banking service requests and queries
+            Submit service requests, communicate with support staff, and track inquiry status
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -187,7 +187,7 @@ export default function CustomerInquiriesPage() {
             className="flex items-center gap-1.5 px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Inquiries (Excel)</span>
+            <span>Download Inquiries (CSV/Excel)</span>
           </button>
           <button
             onClick={() => setShowNewModal(true)}
@@ -210,8 +210,10 @@ export default function CustomerInquiriesPage() {
       ) : inquiries.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
           <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600 font-medium">No inquiries found</p>
-          <p className="text-sm text-slate-400 mt-1">Click "New Inquiry" to raise a support ticket</p>
+          <p className="text-slate-600 font-medium">No inquiries submitted yet</p>
+          <p className="text-xs text-slate-400 mt-1">
+            You have not submitted any customer inquiries. Click "New Inquiry" to create a support request.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

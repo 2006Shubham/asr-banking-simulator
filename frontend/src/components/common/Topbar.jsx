@@ -48,26 +48,26 @@ const Topbar = ({ onToggleSidebar }) => {
   const getPageTitle = () => {
     const path = location.pathname;
     // Customer routes
-    if (path === "/dashboard") return "Dashboard Overview";
-    if (path === "/dashboard/accounts") return "Bank Accounts & Balances";
-    if (path === "/dashboard/transactions") return "Transaction Statements";
+    if (path === "/dashboard") return "My Banking Overview";
+    if (path === "/dashboard/accounts") return "My Accounts";
+    if (path === "/dashboard/transactions") return "Transaction History";
     if (path === "/dashboard/loans") return "Loans & Installments";
-    if (path === "/dashboard/fd") return "Fixed Deposits & Yield";
-    if (path === "/dashboard/cards") return "Cards Management";
-    if (path === "/dashboard/profile") return "Customer Profile & KYC";
-    if (path === "/customer/inquiries") return "Support & Inquiries";
+    if (path === "/dashboard/fd") return "Fixed Deposits";
+    if (path === "/dashboard/cards") return "Debit & Credit Cards";
+    if (path === "/dashboard/profile") return "Customer Details & KYC";
+    if (path === "/customer/inquiries") return "Customer Inquiries";
 
     // Employee routes
-    if (path === "/employee/dashboard") return "Staff Workspace Overview";
-    if (path === "/employee/inquiries") return "Inquiry Queue & Cases";
-    if (path === "/employee/customers") return "Customer Directory Lookup";
-    if (path === "/employee/profile") return "Employee Staff Profile";
+    if (path === "/employee/dashboard") return "Employee Operations Overview";
+    if (path === "/employee/inquiries") return "Assigned Inquiries & Queue";
+    if (path === "/employee/customers") return "Customer Directory";
+    if (path === "/employee/profile") return "Staff Profile";
 
     // Manager routes
     if (path === "/manager/dashboard") return "Branch Operations Overview";
     if (path === "/manager/inquiries") return "Inquiry Oversight & Assignment";
     if (path === "/manager/employees") return "Staff Workload & Performance";
-    if (path === "/manager/reports") return "Branch Analytics & Reporting";
+    if (path === "/manager/reports") return "Branch Reports & Analytics";
     if (path === "/manager/profile") return "Branch Manager Profile";
 
     return "ASR Bank Portal";
@@ -123,10 +123,10 @@ const Topbar = ({ onToggleSidebar }) => {
 
         {/* Mobile Bank Brand */}
         <div className="flex items-center gap-2 lg:hidden shrink-0">
-          <div className="w-7 h-7 rounded-md bg-[#003366] flex items-center justify-center text-white shadow-xs">
-            <Landmark className="w-4 h-4" />
+          <div className="w-8 h-8 rounded-lg bg-white p-0.5 border border-slate-200 flex items-center justify-center shadow-xs">
+            <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
           </div>
-          <span className="font-bold text-sm text-[#003366] tracking-tight">ASR BANK</span>
+          <span className="font-extrabold text-sm text-[#003366] tracking-tight">ASR BANK</span>
         </div>
 
         {/* Desktop Page Title & Breadcrumb */}

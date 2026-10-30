@@ -9,11 +9,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center text-white">
-                <Landmark className="w-5 h-5" />
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs">
+                <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">ASR BANK</span>
+              <div>
+                <span className="text-lg font-extrabold text-white tracking-tight block leading-none">ASR BANK</span>
+                <span className="text-[9px] text-amber-300 tracking-wider uppercase font-semibold mt-0.5 block">Your Trust, Our Priority</span>
+              </div>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
               Institutional Digital Banking Platform. Advanced relational transaction processing and core retail banking services.

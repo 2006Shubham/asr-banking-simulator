@@ -11,20 +11,24 @@ const KPICard = ({ label, value, color }) => (
   </div>
 );
 
-const BreakdownTable = ({ title, data, labelTitle = "Classification", filenamePrefix = "Report" }) => {
-  // Normalize data whether it's an Object/Map { "Accounts": 2 } or an Array [ { category: "Accounts", count: 2 } ]
-  let rows = [];
+const normalizeBreakdown = (data) => {
   if (Array.isArray(data)) {
-    rows = data.map((item) => ({
+    return data.map((item) => ({
       label: item.category || item.status || item.priority || item.label || item.name || "—",
       count: item.count ?? item.value ?? 0,
     }));
-  } else if (data && typeof data === "object") {
-    rows = Object.entries(data).map(([key, val]) => ({
+  }
+  if (data && typeof data === "object") {
+    return Object.entries(data).map(([key, val]) => ({
       label: key,
       count: typeof val === "number" ? val : (val?.count ?? 0),
     }));
   }
+  return [];
+};
+
+const BreakdownTable = ({ title, data, labelTitle = "Classification", filenamePrefix = "Report" }) => {
+  const rows = normalizeBreakdown(data);
 
   const handleExportSingle = () => {
     const headers = [labelTitle, "Total Count"];
@@ -87,18 +91,18 @@ export default function ManagerReportsPage() {
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
-    if (!employee?.branchId) return;
+    const targetBranchId = employee?.branchId || employee?.branch_id || branch?.branchId || "BR001";
     setLoading(true);
     setError(null);
     try {
-      const data = await inquiryService.getBranchReport(employee.branchId);
+      const data = await inquiryService.getBranchReport(targetBranchId);
       setReport(data);
     } catch (e) {
       setError(e.response?.data?.message || "Failed to load branch report data");
     } finally {
       setLoading(false);
     }
-  }, [employee]);
+  }, [employee, branch]);
 
   useEffect(() => {
     load();
@@ -106,6 +110,10 @@ export default function ManagerReportsPage() {
 
   const handleExportFullReport = () => {
     if (!report) return;
+
+    const categoryRows = normalizeBreakdown(report.categoryBreakdown).map((r) => [r.label, r.count]);
+    const statusRows = normalizeBreakdown(report.statusBreakdown).map((r) => [r.label, r.count]);
+    const priorityRows = normalizeBreakdown(report.priorityBreakdown).map((r) => [r.label, r.count]);
 
     const sections = [
       {
@@ -125,17 +133,17 @@ export default function ManagerReportsPage() {
       {
         title: "Distribution by Inquiry Category",
         headers: ["Category", "Case Count"],
-        rows: Object.entries(report.categoryBreakdown || {}).map(([k, v]) => [k, v]),
+        rows: categoryRows,
       },
       {
         title: "Distribution by Status",
         headers: ["Status", "Case Count"],
-        rows: Object.entries(report.statusBreakdown || {}).map(([k, v]) => [k, v]),
+        rows: statusRows,
       },
       {
         title: "Distribution by Priority",
         headers: ["Priority", "Case Count"],
-        rows: Object.entries(report.priorityBreakdown || {}).map(([k, v]) => [k, v]),
+        rows: priorityRows,
       },
     ];
 
@@ -149,7 +157,7 @@ export default function ManagerReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Branch Inquiry Analytics</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Branch Reports & Analytics</h1>
           <p className="text-sm text-slate-500 mt-0.5">
             SQL Aggregated Reports for {branch?.branchName || "Branch"} ({branch?.ifscCode || ""})
           </p>
@@ -168,7 +176,7 @@ export default function ManagerReportsPage() {
             className="flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Full Report (Excel)</span>
+            <span>Download Full Report (CSV/Excel)</span>
           </button>
         </div>
       </div>

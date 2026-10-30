@@ -14,26 +14,10 @@ import { Card, SectionHeading, Badge, Button } from "../../components/common";
 
 const AboutPage = () => {
   const teamMembers = [
-    {
-      name: "Rutuja Peherkar",
-      role: "Lead Architect & UI/UX Specialist",
-      focus: "React Client Architecture, State Design & NetBanking Experience",
-    },
-    {
-      name: "Suraj Wakhure",
-      role: "Backend & Database Architect",
-      focus: "Relational Modeling, MySQL Triggers, Stored Procedures & Integrity",
-    },
-    {
-      name: "Atharva Wadekar",
-      role: "Systems & Security Engineer",
-      focus: "Spring Boot Microservices, REST APIs & Role-Based Authorization",
-    },
-    {
-      name: "Shubham Deshmukh",
-      role: "Full-Stack Integration Engineer",
-      focus: "Inquiry Escalation Workflows, Financial Ledgers & Core Operations",
-    },
+    { name: "Rutuja Peherkar" },
+    { name: "Suraj Wakhure" },
+    { name: "Atharva Wadekar" },
+    { name: "Shubham Deshmukh" },
   ];
 
   const architecturalPillars = [
@@ -96,12 +80,12 @@ const AboutPage = () => {
           <div className="lg:col-span-5">
             <Card padding="lg" className="border-slate-200 bg-white shadow-xs">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-[#003366] text-white flex items-center justify-center font-bold">
-                  <Landmark className="w-5 h-5" />
+                <div className="w-12 h-12 rounded-xl bg-white p-1 border border-slate-200 flex items-center justify-center shadow-xs">
+                  <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">ASR Bank Mission</h4>
-                  <p className="text-xs text-slate-400">Institutional Values</p>
+                  <h4 className="font-extrabold text-slate-900 text-sm leading-none">ASR Bank Mission</h4>
+                  <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wider mt-1">Your Trust, Our Priority</p>
                 </div>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed italic mb-4">
@@ -164,18 +148,15 @@ const AboutPage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {teamMembers.map((member, idx) => (
-              <Card key={idx} padding="md" className="border-slate-200">
-                <div className="w-10 h-10 rounded-full bg-blue-50 text-[#003366] flex items-center justify-center font-bold mb-3">
+              <Card key={idx} padding="md" className="border-slate-200 text-center">
+                <div className="w-12 h-12 rounded-full bg-blue-50 text-[#003366] flex items-center justify-center font-bold mb-3 mx-auto">
                   <Users className="w-5 h-5" />
                 </div>
                 <h4 className="font-bold text-slate-900 text-base">
                   {member.name}
                 </h4>
-                <p className="text-xs font-semibold text-blue-700 mt-0.5">
-                  {member.role}
-                </p>
-                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                  {member.focus}
+                <p className="text-xs text-slate-500 mt-1">
+                  Project Team Member
                 </p>
               </Card>
             ))}

@@ -91,14 +91,14 @@ const CardComponent = ({
           {/* Card Top: Bank Logo, Contactless Icon & Card Type */}
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-extrabold text-xs tracking-wider text-amber-300">
-                ASR
+              <div className="w-8 h-8 rounded-lg bg-white p-0.5 flex items-center justify-center shadow-xs">
+                <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
               </div>
               <div>
                 <span className="font-extrabold tracking-wider text-sm text-white">
                   ASR BANK
                 </span>
-                <span className="text-[9px] block text-slate-300 tracking-widest uppercase font-medium">
+                <span className="text-[9px] block text-amber-300 tracking-widest uppercase font-medium">
                   {isDebit ? "Retail Banking" : "Platinum Signature"}
                 </span>
               </div>

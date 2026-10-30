@@ -53,7 +53,7 @@ const CardsPage = () => {
   });
 
   const activeCount = cards.filter((c) => c.status === "Active").length;
-  const customerName = customer?.name || "Suraj Walke";
+  const customerName = customer?.name || "Cardholder";
 
   if (loading) {
     return <LoadingState message="Loading your debit and credit cards..." fullPage />;
@@ -152,16 +152,25 @@ const CardsPage = () => {
       </div>
 
       {/* 4. Multi-Card Grid using reusable CardComponent */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredCards.map((card) => (
-          <CardComponent
-            key={card.cardNo}
-            card={card}
-            customerName={customerName}
-            onStatusChange={handleCardStatusChange}
-          />
-        ))}
-      </div>
+      {filteredCards.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+          <p className="text-slate-600 font-medium">No cards found</p>
+          <p className="text-xs text-slate-400 mt-1">
+            No issued debit or credit cards match the selected filter.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {filteredCards.map((card) => (
+            <CardComponent
+              key={card.cardNo}
+              card={card}
+              customerName={customerName}
+              onStatusChange={handleCardStatusChange}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 5. Instant Green PIN Modal */}
       <Modal

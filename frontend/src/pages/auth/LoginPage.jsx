@@ -67,6 +67,12 @@ const LoginPage = () => {
     setError("");
   };
 
+  const handleFillCustomerSuraj = () => {
+    setUsername("suraj_wakhure");
+    setPassword("demo123");
+    setError("");
+  };
+
   const handleFillEmployee = () => {
     setUsername("shubham_emp");
     setPassword("demo123");
@@ -84,16 +90,16 @@ const LoginPage = () => {
       {/* Top Header */}
       <header className="bg-white border-b border-slate-200 py-3.5 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-[#003366] text-white flex items-center justify-center font-bold shadow-xs group-hover:bg-[#002244] transition">
-              <Landmark className="w-5 h-5" />
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-white p-1 border border-slate-200 flex items-center justify-center shadow-xs">
+              <img src="/asr-bank-logo.png" alt="ASR Bank" className="h-full w-auto object-contain" />
             </div>
             <div>
-              <span className="text-lg font-bold tracking-tight text-[#003366]">
+              <span className="text-lg font-extrabold tracking-tight text-[#003366] leading-none block">
                 ASR BANK
               </span>
-              <span className="block text-[9px] uppercase tracking-widest text-slate-400 font-semibold">
-                Aapka Secure Rasta
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 font-semibold mt-0.5 block">
+                Your Trust, Our Priority
               </span>
             </div>
           </Link>
@@ -140,6 +146,20 @@ const LoginPage = () => {
                     <div>
                       <span className="font-semibold text-white">rutuja_p</span>
                       <span className="text-[10px] text-blue-300 ml-2">Rutuja Peherkar</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-200 font-bold">
+                      CUSTOMER
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleFillCustomerSuraj}
+                    className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
+                  >
+                    <div>
+                      <span className="font-semibold text-white">suraj_wakhure</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Suraj Wakhure</span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-200 font-bold">
                       CUSTOMER

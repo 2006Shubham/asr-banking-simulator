@@ -17,9 +17,9 @@ const STATUS_STYLES = {
 const UPDATABLE_STATUSES = ["IN_PROGRESS", "WAITING_FOR_CUSTOMER", "RESOLVED"];
 
 const TABS = [
-  { key: "assigned", label: "My Cases" },
+  { key: "assigned", label: "My Assigned Inquiries" },
   { key: "queue", label: "Branch Queue" },
-  { key: "escalated", label: "Escalated" },
+  { key: "escalated", label: "Escalated Inquiries" },
 ];
 
 export default function EmployeeInquiriesPage() {
@@ -213,8 +213,10 @@ export default function EmployeeInquiriesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Inquiry Workspace</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Manage customer inquiries, claims, and case histories</p>
+          <h1 className="text-2xl font-bold text-slate-900">Assigned Inquiries & Queue</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Review assigned cases, post customer updates, claim unassigned requests, and record status changes
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -261,8 +263,21 @@ export default function EmployeeInquiriesPage() {
           {error}
         </div>
       ) : inquiries.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-slate-200 text-slate-500">
-          No inquiries in {TABS.find((t) => t.key === activeTab)?.label}
+        <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
+          <p className="text-slate-600 font-medium">
+            {activeTab === "assigned"
+              ? "No assigned inquiries"
+              : activeTab === "queue"
+              ? "Branch queue is empty"
+              : "No escalated inquiries"}
+          </p>
+          <p className="text-xs text-slate-400 mt-1">
+            {activeTab === "assigned"
+              ? "You currently have no inquiries assigned to your queue. Check Branch Queue to claim available requests."
+              : activeTab === "queue"
+              ? "There are no unassigned customer inquiries waiting in the branch queue."
+              : "There are no inquiries currently flagged as escalated."}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
