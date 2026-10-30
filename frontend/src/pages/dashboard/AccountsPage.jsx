@@ -26,6 +26,7 @@ const AccountsPage = () => {
   const [transferChannel, setTransferChannel] = useState("UPI");
   const [transferSuccess, setTransferSuccess] = useState(false);
   const [transferReceipt, setTransferReceipt] = useState(null);
+  const [transferError, setTransferError] = useState("");
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -57,22 +58,37 @@ const AccountsPage = () => {
 
   const handleOpenTransfer = (accNo) => {
     setSelectedAccNo(accNo || accounts[0]?.accNo || "");
+    setTransferBeneficiary("");
+    setTransferAmount("");
+    setTransferChannel("UPI");
     setTransferSuccess(false);
     setTransferReceipt(null);
+    setTransferError("");
     setTransferModalOpen(true);
   };
 
   const handleExecuteTransfer = async (e) => {
     e.preventDefault();
+    setTransferError("");
     if (!transferBeneficiary || !transferAmount) return;
+
+    const trimmed = transferBeneficiary.trim();
+    const isAccNo = /^ACC\d+$/i.test(trimmed);
+    const targetAcc = isAccNo ? trimmed.toUpperCase() : null;
+
+    if (targetAcc && targetAcc === selectedAccNo) {
+      setTransferError("Source and Destination accounts cannot be the same.");
+      return;
+    }
+
     try {
       const res = await transactionService.executeTransfer({
         fromAccNo: selectedAccNo,
-        toAccNo: null,
+        toAccNo: targetAcc,
         amount: transferAmount,
         channel: transferChannel,
-        description: `Fund Transfer to ${transferBeneficiary}`,
-        beneficiary: transferBeneficiary,
+        description: `Fund Transfer to ${trimmed}`,
+        beneficiary: trimmed,
       });
 
       setTransferReceipt({
@@ -86,6 +102,7 @@ const AccountsPage = () => {
       setAccounts(updatedAccounts);
     } catch (err) {
       console.error("Transfer failed", err);
+      setTransferError(err.response?.data?.message || err.message || "Transfer failed. Please check balance and details.");
     }
   };
 
@@ -228,6 +245,11 @@ const AccountsPage = () => {
           </div>
         ) : (
           <form onSubmit={handleExecuteTransfer} className="space-y-4">
+            {transferError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg">
+                {transferError}
+              </div>
+            )}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Select Source Account
