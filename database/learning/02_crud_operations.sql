@@ -127,11 +127,25 @@ WHERE acc_no = 'ACC999';
 -- ============================================================================
 -- Scenario C: Soft Delete (Banking Industry Best Practice)
 -- ============================================================================
--- the status to 'Closed'. All historical transactions remain intact and valid.
+-- Banking Regulations mandate that historical financial records must be preserved.
+-- Instead of a hard DELETE, we perform a "Soft Delete" by updating the status to 'Closed'.
+--
+-- IMPORTANT DBMS INVARIANT GUARD (Trigger trg_accounts_before_update):
+-- MySQL will actively REJECT closing an account if balance > 0.00:
+--   ERROR 1644 (45000): Operation Denied: Cannot close account with positive balance.
+--                       Withdraw or transfer funds first.
+--
+-- Step 1: Liquidate / Transfer remaining balance to 0.00:
+--   UPDATE accounts SET balance = 0.00 WHERE acc_no = 'ACC999';
+--
+-- Step 2: Now safely perform Soft Delete:
 -- ============================================================================
 
 UPDATE accounts
 SET 
+    balance = 0.00,
     status = 'Closed'
 WHERE 
-    acc_no = 'ACC002';
+    acc_no = 'ACC999';
+
+-- Expected Output: Query OK, 1 row affected (Status successfully transitioned to Closed)

@@ -12,7 +12,7 @@ public class Customer {
     @Column(name = "cust_id", length = 20, nullable = false)
     private String custId;
 
-    @Column(name = "user_id", length = 20, nullable = false, unique = true)
+    @Column(name = "user_id", length = 20, nullable = true, unique = true)
     private String userId;
 
     @Column(name = "branch_id", length = 20, nullable = false)

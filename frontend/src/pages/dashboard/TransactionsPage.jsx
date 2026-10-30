@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   Download,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import accountService from "../../services/accountService";
 import transactionService from "../../services/transactionService";
 import { formatCurrency } from "../../utils/formatters";
 import {
@@ -14,6 +16,7 @@ import { SectionHeading, Badge, Button, LoadingState } from "../../components/co
 const PAGE_SIZE = 6;
 
 const TransactionsPage = () => {
+  const { customer } = useAuth();
   const [allTransactions, setAllTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,13 +34,22 @@ const TransactionsPage = () => {
   const [selectedTxn, setSelectedTxn] = useState(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
-  // Fetch transactions using transactionService abstraction
+  // Fetch transactions filtered to current customer's accounts
   useEffect(() => {
     const fetchTxns = async () => {
       try {
         setLoading(true);
-        const data = await transactionService.getTransactions();
-        setAllTransactions(data);
+        const custId = customer?.custId || "CUST001";
+        const [userAccs, data] = await Promise.all([
+          accountService.getAccountsByCustomer(custId),
+          transactionService.getTransactions(),
+        ]);
+        if (userAccs?.length && data?.length) {
+          const userAccNos = new Set(userAccs.map((a) => a.accNo));
+          setAllTransactions(data.filter((t) => userAccNos.has(t.accNo)));
+        } else {
+          setAllTransactions(data || []);
+        }
       } catch (err) {
         console.error("Failed to load transactions", err);
       } finally {
@@ -46,7 +58,7 @@ const TransactionsPage = () => {
     };
 
     fetchTxns();
-  }, []);
+  }, [customer]);
 
   // Filter transactions using local state
   const filteredTransactions = useMemo(() => {

@@ -11,20 +11,15 @@ import {
   ChevronDown,
   CheckCircle2,
   ArrowRight,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 /**
- * ASR Bank - Enhanced Dashboard Topbar Component
- * Features:
- * - Dynamic Page Title
- * - Global Search Placeholder
- * - Notification Bell with alert dropdown
- * - Customer Avatar/Name with Profile Menu
- * - Mobile Menu trigger
+ * ASR Bank - Role-Aware Dashboard Topbar Component
  */
 const Topbar = ({ onToggleSidebar }) => {
-  const { customer, logout } = useAuth();
+  const { user, customer, employee, branch, logout, isCustomer, isEmployee, isManager } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,24 +46,31 @@ const Topbar = ({ onToggleSidebar }) => {
 
   // Map route to readable page title
   const getPageTitle = () => {
-    switch (location.pathname) {
-      case "/dashboard":
-        return "Dashboard Overview";
-      case "/dashboard/accounts":
-        return "Bank Accounts & Balances";
-      case "/dashboard/transactions":
-        return "Transaction Statements";
-      case "/dashboard/loans":
-        return "Loans & Installments";
-      case "/dashboard/fd":
-        return "Fixed Deposits & Yield";
-      case "/dashboard/cards":
-        return "Cards Management";
-      case "/dashboard/profile":
-        return "Customer Profile & KYC";
-      default:
-        return "NetBanking Portal";
-    }
+    const path = location.pathname;
+    // Customer routes
+    if (path === "/dashboard") return "Dashboard Overview";
+    if (path === "/dashboard/accounts") return "Bank Accounts & Balances";
+    if (path === "/dashboard/transactions") return "Transaction Statements";
+    if (path === "/dashboard/loans") return "Loans & Installments";
+    if (path === "/dashboard/fd") return "Fixed Deposits & Yield";
+    if (path === "/dashboard/cards") return "Cards Management";
+    if (path === "/dashboard/profile") return "Customer Profile & KYC";
+    if (path === "/customer/inquiries") return "Support & Inquiries";
+
+    // Employee routes
+    if (path === "/employee/dashboard") return "Staff Workspace Overview";
+    if (path === "/employee/inquiries") return "Inquiry Queue & Cases";
+    if (path === "/employee/customers") return "Customer Directory Lookup";
+    if (path === "/employee/profile") return "Employee Staff Profile";
+
+    // Manager routes
+    if (path === "/manager/dashboard") return "Branch Operations Overview";
+    if (path === "/manager/inquiries") return "Inquiry Oversight & Assignment";
+    if (path === "/manager/employees") return "Staff Workload & Performance";
+    if (path === "/manager/reports") return "Branch Analytics & Reporting";
+    if (path === "/manager/profile") return "Branch Manager Profile";
+
+    return "ASR Bank Portal";
   };
 
   const handleLogout = () => {
@@ -77,28 +79,33 @@ const Topbar = ({ onToggleSidebar }) => {
     navigate("/login");
   };
 
-  // Mock banking notifications
+  const displayName = isCustomer()
+    ? (customer?.name || user?.username || "Customer")
+    : (employee?.name || user?.username || "Bank Staff");
+
+  const displayId = isCustomer()
+    ? (customer?.custId || "CUST")
+    : (employee?.empId || "EMP");
+
+  const portalBreadcrumb = isManager()
+    ? "Branch Management"
+    : isEmployee()
+    ? "Staff Portal"
+    : "NetBanking";
+
+  const profileLink = isManager()
+    ? "/manager/profile"
+    : isEmployee()
+    ? "/employee/profile"
+    : "/dashboard/profile";
+
+  // Notifications
   const notifications = [
     {
       id: 1,
-      title: "Salary Credit Received",
-      desc: "+₹50,000.00 credited to Savings A/C •••• 0001 via NEFT.",
-      time: "2 hours ago",
-      type: "credit",
-    },
-    {
-      id: 2,
-      title: "Upcoming Loan EMI",
-      desc: "Installment #3 for Personal Loan #LN001 due on 01 Apr 2025.",
-      time: "1 day ago",
-      type: "due",
-    },
-    {
-      id: 3,
-      title: "FD Interest Accrued",
-      desc: "₹7,200.00 annual interest calculated for Deposit #FD001.",
-      time: "3 days ago",
-      type: "fd",
+      title: "Secure Connection Active",
+      desc: "Logged in via authenticated encrypted session.",
+      time: "Just now",
     },
   ];
 
@@ -106,7 +113,6 @@ const Topbar = ({ onToggleSidebar }) => {
     <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
       {/* Left: Mobile Trigger, Brand, and Desktop Page Title */}
       <div className="flex items-center gap-3 lg:gap-6 min-w-0">
-        {/* Mobile Hamburger Drawer Trigger */}
         <button
           onClick={onToggleSidebar}
           className="lg:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition focus:outline-none"
@@ -126,9 +132,15 @@ const Topbar = ({ onToggleSidebar }) => {
         {/* Desktop Page Title & Breadcrumb */}
         <div className="hidden lg:block truncate">
           <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-            <span>NetBanking</span>
+            <span>{portalBreadcrumb}</span>
             <span>/</span>
-            <span className="text-slate-600">{customer ? customer.custId : "CUST001"}</span>
+            <span className="text-slate-600 font-mono">{displayId}</span>
+            {branch?.branchName && (
+              <>
+                <span>/</span>
+                <span className="text-slate-500">{branch.branchName}</span>
+              </>
+            )}
           </div>
           <h2 className="text-base font-bold text-slate-900 leading-tight">
             {getPageTitle()}
@@ -146,14 +158,27 @@ const Topbar = ({ onToggleSidebar }) => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search accounts, transactions, or services..."
+            placeholder="Quick search or navigation..."
             className="w-full text-xs pl-9 pr-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#003366]/20 focus:border-[#003366] focus:bg-white transition"
           />
         </div>
       </div>
 
-      {/* Right: Security, Notifications & User Profile Menu */}
+      {/* Right: Security, Role Badge, Notifications & User Profile Menu */}
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+        {/* Role Badge */}
+        <span
+          className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+            isManager()
+              ? "bg-amber-50 text-amber-800 border-amber-200"
+              : isEmployee()
+              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+              : "bg-blue-50 text-[#003366] border-blue-200"
+          }`}
+        >
+          {user?.role?.toUpperCase() || "USER"}
+        </span>
+
         {/* SSL Badge (Tablet & Desktop) */}
         <div className="hidden xl:flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -168,44 +193,27 @@ const Topbar = ({ onToggleSidebar }) => {
             aria-label="View notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white"></span>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white"></span>
           </button>
 
-          {/* Notifications Dropdown Card */}
           {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-fadeIn">
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-fadeIn">
               <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Banking Alerts
+                  System Alerts
                 </span>
                 <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-blue-50 text-[#003366]">
-                  3 New
+                  Active
                 </span>
               </div>
-
               <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                 {notifications.map((item) => (
                   <div key={item.id} className="p-3 hover:bg-slate-50 transition text-xs">
                     <p className="font-semibold text-slate-900">{item.title}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-                      {item.desc}
-                    </p>
-                    <span className="text-[10px] text-slate-400 mt-1 block">
-                      {item.time}
-                    </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{item.desc}</p>
+                    <span className="text-[10px] text-slate-400 mt-1 block">{item.time}</span>
                   </div>
                 ))}
-              </div>
-
-              <div className="px-4 py-2 border-t border-slate-100 text-center">
-                <Link
-                  to="/dashboard/transactions"
-                  onClick={() => setNotificationsOpen(false)}
-                  className="text-xs text-[#003366] font-semibold hover:underline inline-flex items-center gap-1"
-                >
-                  <span>View All In Statement</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
               </div>
             </div>
           )}
@@ -220,53 +228,42 @@ const Topbar = ({ onToggleSidebar }) => {
             aria-label="User profile menu"
           >
             <div className="w-7 h-7 rounded-full bg-[#003366] text-white flex items-center justify-center text-xs font-bold shadow-xs">
-              {customer?.name
-                ? customer.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                : "SW"}
+              {displayName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .slice(0, 2)}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-xs font-bold text-slate-900 leading-none">
-                {customer?.name || "Suraj W"}
+              <p className="text-xs font-bold text-slate-900 leading-none truncate max-w-[120px]">
+                {displayName}
               </p>
-              <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                {customer ? customer.custId : "CUST001"}
-              </p>
+              <p className="text-[10px] text-slate-400 font-mono mt-0.5">{displayId}</p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
           </button>
 
-          {/* Profile Dropdown Menu */}
           {profileMenuOpen && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-fadeIn">
               <div className="px-4 py-2.5 border-b border-slate-100">
-                <p className="text-xs font-bold text-slate-900">{customer?.name || "Suraj W"}</p>
-                <p className="text-[11px] text-slate-500 truncate">{customer?.email || "suraj@example.com"}</p>
+                <p className="text-xs font-bold text-slate-900 truncate">{displayName}</p>
+                <p className="text-[11px] text-slate-500 truncate">
+                  {customer?.email || employee?.email || user?.username}
+                </p>
                 <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-700 font-semibold">
                   <CheckCircle2 className="w-3 h-3" />
-                  <span>KYC Verified Customer</span>
+                  <span>Verified {user?.role} Session</span>
                 </div>
               </div>
 
               <div className="py-1 text-xs text-slate-700">
                 <Link
-                  to="/dashboard/profile"
+                  to={profileLink}
                   onClick={() => setProfileMenuOpen(false)}
                   className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 transition"
                 >
                   <User className="w-4 h-4 text-slate-400" />
-                  <span>View Profile & KYC</span>
-                </Link>
-
-                <Link
-                  to="/dashboard/accounts"
-                  onClick={() => setProfileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-2 hover:bg-slate-50 transition"
-                >
-                  <Landmark className="w-4 h-4 text-slate-400" />
-                  <span>Manage Accounts</span>
+                  <span>View Profile</span>
                 </Link>
               </div>
 

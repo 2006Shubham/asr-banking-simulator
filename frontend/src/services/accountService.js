@@ -71,6 +71,64 @@ export const accountService = {
     const response = await api.get("/api/accounts/summary/by-type");
     return response.data;
   },
+
+  /**
+   * CREATE: Open a new account
+   * @param {Object} accountData
+   */
+  createAccount: async (accountData) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return {
+        accNo: `ACC${Math.floor(100 + Math.random() * 900)}`,
+        status: "Active",
+        openDate: new Date().toISOString().split("T")[0],
+        ...accountData,
+      };
+    }
+    const response = await api.post("/api/accounts", accountData);
+    return response.data;
+  },
+
+  /**
+   * UPDATE: Modify account status (Active, Dormant, Frozen)
+   * @param {string} accNo
+   * @param {string} status
+   */
+  updateAccountStatus: async (accNo, status) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return { accNo, status };
+    }
+    const response = await api.patch(`/api/accounts/${accNo}/status`, { status });
+    return response.data;
+  },
+
+  /**
+   * SOFT DELETE: Close an account (preserves transaction history)
+   * @param {string} accNo
+   */
+  closeAccount: async (accNo) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return { message: `Account ${accNo} closed successfully.` };
+    }
+    const response = await api.post(`/api/accounts/${accNo}/close`);
+    return response.data;
+  },
+
+  /**
+   * DELETE: Permanently delete an unused account (subject to ON DELETE RESTRICT)
+   * @param {string} accNo
+   */
+  deleteAccount: async (accNo) => {
+    if (USE_MOCK) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return { message: `Account ${accNo} deleted successfully.` };
+    }
+    const response = await api.delete(`/api/accounts/${accNo}`);
+    return response.data;
+  },
 };
 
 export default accountService;

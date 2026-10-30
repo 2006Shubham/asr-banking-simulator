@@ -13,6 +13,9 @@ public class Employee {
     @Column(name = "emp_id", length = 20, nullable = false)
     private String empId;
 
+    @Column(name = "user_id", length = 20, unique = true)
+    private String userId;
+
     @Column(name = "branch_id", length = 20, nullable = false)
     private String branchId;
 
@@ -56,6 +59,9 @@ public class Employee {
 
     public String getEmpId() { return empId; }
     public void setEmpId(String empId) { this.empId = empId; }
+
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     public String getBranchId() { return branchId; }
     public void setBranchId(String branchId) { this.branchId = branchId; }

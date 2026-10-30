@@ -20,28 +20,24 @@ import {
   loanInstallmentService,
   fdService,
 } from "../../services";
-import {
-  mockAccounts,
-  mockTransactions,
-  mockLoans,
-  mockFDs,
-} from "../../data/mockData";
+import { Card, Badge, Button, Modal, Input, LoadingState } from "../../components/common";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { maskAccountNumber } from "../../utils/maskers";
-import { Card, Badge, Button, Modal, Input } from "../../components/common";
 
 const OverviewPage = () => {
   const { customer } = useAuth();
 
-  // State populated via service layer (with initial mock fallback)
-  const [accounts, setAccounts] = useState(mockAccounts);
-  const [transactions, setTransactions] = useState(mockTransactions);
-  const [loans, setLoans] = useState(mockLoans);
-  const [fds, setFds] = useState(mockFDs);
+  // Dynamic state populated strictly from database via backend REST APIs
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [loans, setLoans] = useState([]);
+  const [fds, setFds] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadOverviewData = async () => {
       try {
+        setLoading(true);
         const custId = customer?.custId || "CUST001";
         const [accs, txns, lns, fixedDeps] = await Promise.all([
           accountService.getAccountsByCustomer(custId),
@@ -49,12 +45,23 @@ const OverviewPage = () => {
           loanService.getLoansByCustomer(custId),
           fdService.getFDsByCustomer(custId),
         ]);
-        if (accs?.length) setAccounts(accs);
-        if (txns?.length) setTransactions(txns);
+        if (accs?.length) {
+          setAccounts(accs);
+          setTransferSourceAcc(accs[0].accNo);
+        }
+        if (txns?.length) {
+          const userAccNos = new Set((accs || []).map((a) => a.accNo));
+          const filtered = userAccNos.size > 0
+            ? txns.filter((t) => userAccNos.has(t.accNo))
+            : txns;
+          setTransactions(filtered);
+        }
         if (lns?.length) setLoans(lns);
         if (fixedDeps?.length) setFds(fixedDeps);
       } catch (e) {
         console.warn("Overview service data load failed, using local store", e);
+      } finally {
+        setLoading(false);
       }
     };
     loadOverviewData();
@@ -93,20 +100,29 @@ const OverviewPage = () => {
     e.preventDefault();
     if (!transferBeneficiary || !transferAmount || Number(transferAmount) <= 0) return;
 
+    const trimmed = transferBeneficiary.trim();
+    // Check if beneficiary is an internal bank account (e.g. ACC001, ACC002, ACC003)
+    const isAccNo = /^ACC\d+$/i.test(trimmed);
+    const targetAcc = isAccNo ? trimmed.toUpperCase() : null;
+
+    if (targetAcc && targetAcc === transferSourceAcc) {
+      alert("Source and Destination accounts cannot be the same. Please select or enter a different account.");
+      return;
+    }
+
     setTransferStatus("processing");
     try {
-      const targetAcc = accounts.find((a) => a.accNo !== transferSourceAcc)?.accNo || "ACC002";
       const result = await transactionService.executeTransfer({
         fromAccNo: transferSourceAcc,
         toAccNo: targetAcc,
         amount: transferAmount,
         channel: transferChannel,
-        description: `Fund Transfer to ${transferBeneficiary}`,
-        beneficiary: transferBeneficiary,
+        description: `Fund Transfer to ${trimmed}`,
+        beneficiary: trimmed,
       });
 
       setTransferReceipt({
-        ref: result.ref || result.txnId || `TXN${Math.floor(100000 + Math.random() * 900000)}`,
+        ref: result.transaction?.refNo || result.ref || result.txnId || `TXN${Math.floor(100000 + Math.random() * 900000)}`,
         date: new Date().toLocaleString("en-IN"),
       });
       setTransferStatus("success");
@@ -118,7 +134,13 @@ const OverviewPage = () => {
         transactionService.getTransactions(),
       ]);
       if (updatedAccs?.length) setAccounts(updatedAccs);
-      if (updatedTxns?.length) setTransactions(updatedTxns);
+      if (updatedTxns?.length) {
+        const userAccNos = new Set((updatedAccs || []).map((a) => a.accNo));
+        const filtered = userAccNos.size > 0
+          ? updatedTxns.filter((t) => userAccNos.has(t.accNo))
+          : updatedTxns;
+        setTransactions(filtered);
+      }
     } catch (err) {
       console.error("Transfer failed", err);
       alert(err.response?.data?.message || err.message || "Transfer failed. Please check funds.");
@@ -169,6 +191,10 @@ const OverviewPage = () => {
     setLoanPayStatus(null);
     setLoanReceipt(null);
   };
+
+  if (loading && accounts.length === 0) {
+    return <LoadingState message="Loading live banking details from database..." fullPage />;
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8">

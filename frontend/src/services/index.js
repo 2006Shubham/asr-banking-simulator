@@ -23,3 +23,4 @@ export { default as fdService } from "./fdService";
 export { default as fdInterestService } from "./fdInterestService";
 export { default as cardService } from "./cardService";
 export { default as kycService } from "./kycService";
+export { default as inquiryService } from "./inquiryService";

@@ -3,28 +3,16 @@ import { mockUser, mockCustomer } from "../data/mockData";
 
 /**
  * ASR Bank - Authentication Service
- *
- * Current: Validates against mock credentials (suraj_w / demo123).
- * Future: Calls Spring Boot backend via POST /api/auth/login.
- *
- * This clean abstraction ensures the UI does not require modification
- * when transitioning from mock to backend REST APIs.
  */
-
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== "false";
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true";
 
 export const authService = {
   /**
    * Login user with username and password
-   * @param {string} username
-   * @param {string} password
-   * @returns {Promise<{token: string, user: object, customer: object}>}
    */
   login: async (username, password) => {
     if (USE_MOCK) {
-      // Simulate realistic banking network verification (300ms)
       await new Promise((resolve) => setTimeout(resolve, 300));
-
       const cleanUser = username?.trim();
       const cleanPass = password?.trim();
 
@@ -35,8 +23,6 @@ export const authService = {
           customer: mockCustomer,
         };
       }
-
-      // Explicit error message for invalid credentials
       throw new Error(
         "Invalid Username or Password. Please check your NetBanking credentials and try again."
       );
@@ -51,15 +37,27 @@ export const authService = {
   },
 
   /**
-   * Invalidate session on server (optional when live)
+   * Register user for NetBanking using existing bank account
+   */
+  register: async ({ accountNo, email, phone, username, password }) => {
+    const response = await api.post("/api/auth/register", {
+      accountNo: accountNo?.trim(),
+      email: email?.trim(),
+      phone: phone?.trim(),
+      username: username?.trim(),
+      password,
+    });
+    return response.data;
+  },
+
+  /**
+   * Invalidate session
    */
   logout: async () => {
-    if (!USE_MOCK) {
-      try {
-        await api.post("/api/auth/logout");
-      } catch (err) {
-        console.warn("Backend logout notification failed", err);
-      }
+    try {
+      await api.post("/api/auth/logout");
+    } catch (err) {
+      console.warn("Backend logout notification failed", err);
     }
   },
 };

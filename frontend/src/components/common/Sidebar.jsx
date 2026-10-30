@@ -11,26 +11,60 @@ import {
   LogOut,
   Landmark,
   X,
+  MessageSquare,
+  Users,
+  BarChart3,
+  ClipboardList,
+  Search,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 /**
- * ASR Bank - Customer Portal Sidebar
- * Responsive navigation supporting desktop sticky layout and mobile off-canvas drawer.
+ * ASR Bank — Role-Aware Sidebar Navigation
+ * Renders different nav items based on the authenticated user's role:
+ * - Customer: personal banking portal
+ * - Employee: inquiry queue and customer service tools
+ * - Manager: branch oversight, reporting, and staff management
  */
 const Sidebar = ({ isOpen = false, onClose }) => {
-  const { logout, customer } = useAuth();
+  const { logout, user, customer, employee, branch, isCustomer, isEmployee, isManager } = useAuth();
   const navigate = useNavigate();
 
-  const navItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Accounts", path: "/dashboard/accounts", icon: Wallet },
-    { name: "Transactions", path: "/dashboard/transactions", icon: ArrowLeftRight },
-    { name: "Loans", path: "/dashboard/loans", icon: BadgePercent },
-    { name: "Fixed Deposits", path: "/dashboard/fd", icon: PiggyBank },
-    { name: "Cards", path: "/dashboard/cards", icon: CreditCard },
-    { name: "Profile", path: "/dashboard/profile", icon: UserCheck },
+  // Customer navigation items
+  const customerNavItems = [
+    { name: "Dashboard",      path: "/dashboard",              icon: LayoutDashboard },
+    { name: "Accounts",       path: "/dashboard/accounts",     icon: Wallet },
+    { name: "Transactions",   path: "/dashboard/transactions", icon: ArrowLeftRight },
+    { name: "Loans",          path: "/dashboard/loans",        icon: BadgePercent },
+    { name: "Fixed Deposits", path: "/dashboard/fd",           icon: PiggyBank },
+    { name: "Cards",          path: "/dashboard/cards",        icon: CreditCard },
+    { name: "Support",        path: "/customer/inquiries",     icon: MessageSquare },
+    { name: "Profile",        path: "/dashboard/profile",      icon: UserCheck },
   ];
+
+  // Employee navigation items
+  const employeeNavItems = [
+    { name: "Dashboard",       path: "/employee/dashboard",   icon: LayoutDashboard },
+    { name: "Inquiry Queue",   path: "/employee/inquiries",   icon: ClipboardList },
+    { name: "Customer Lookup", path: "/employee/customers",   icon: Search },
+    { name: "Profile",         path: "/employee/profile",     icon: UserCheck },
+  ];
+
+  // Manager navigation items
+  const managerNavItems = [
+    { name: "Dashboard",       path: "/manager/dashboard",    icon: LayoutDashboard },
+    { name: "Inquiries",       path: "/manager/inquiries",    icon: ClipboardList },
+    { name: "Staff Workload",  path: "/manager/employees",    icon: Users },
+    { name: "Branch Reports",  path: "/manager/reports",      icon: BarChart3 },
+    { name: "Profile",         path: "/manager/profile",      icon: UserCheck },
+  ];
+
+  const navItems = isManager()
+    ? managerNavItems
+    : isEmployee()
+    ? employeeNavItems
+    : customerNavItems;
 
   const handleLogout = () => {
     logout();
@@ -38,10 +72,31 @@ const Sidebar = ({ isOpen = false, onClose }) => {
   };
 
   const handleNavClick = () => {
-    if (onClose) {
-      onClose();
-    }
+    if (onClose) onClose();
   };
+
+  // Sidebar header labels per role
+  const portalLabel = isManager()
+    ? "Branch Management"
+    : isEmployee()
+    ? "Staff Portal"
+    : "NetBanking Portal";
+
+  const roleBadgeColor = isManager()
+    ? "bg-amber-500 text-amber-950"
+    : isEmployee()
+    ? "bg-emerald-600 text-white"
+    : "bg-blue-600 text-white";
+
+  const displayName = isCustomer()
+    ? (customer?.name || user?.username || "Customer")
+    : (employee?.name || user?.username || "Staff");
+
+  const displayId = isCustomer()
+    ? (customer?.custId || "")
+    : (employee?.empId || "");
+
+  const branchLabel = branch?.branchName || "";
 
   return (
     <>
@@ -71,11 +126,10 @@ const Sidebar = ({ isOpen = false, onClose }) => {
                 ASR BANK
               </h1>
               <p className="text-[10px] uppercase tracking-wider text-blue-300 font-semibold mt-1">
-                NetBanking Portal
+                {portalLabel}
               </p>
             </div>
           </div>
-
           {/* Close button for mobile */}
           <button
             onClick={onClose}
@@ -89,50 +143,52 @@ const Sidebar = ({ isOpen = false, onClose }) => {
         {/* User Quick Info */}
         <div className="px-5 py-3.5 bg-blue-950/60 border-b border-blue-900/30">
           <p className="text-[11px] text-blue-300/80">Logged in as</p>
-          <p className="text-sm font-semibold text-white truncate">
-            {customer ? customer.name : "Suraj W"}
-          </p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/80 text-blue-200 font-mono">
-              {customer ? customer.custId : "CUST001"}
+          <p className="text-sm font-semibold text-white truncate">{displayName}</p>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {displayId && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/80 text-blue-200 font-mono">
+                {displayId}
+              </span>
+            )}
+            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${roleBadgeColor}`}>
+              {user?.role?.toUpperCase() || "USER"}
             </span>
-            <span className="text-[10px] text-emerald-400 font-medium">● Verified</span>
           </div>
+          {branchLabel && (
+            <p className="text-[10px] text-blue-400 mt-1 truncate">{branchLabel}</p>
+          )}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.name}
-                to={item.path}
-                end={item.path === "/dashboard"}
-                onClick={handleNavClick}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? "bg-blue-600 text-white font-semibold shadow-xs border-l-4 border-amber-400 pl-2.5"
-                      : "text-blue-100/80 hover:bg-blue-900/50 hover:text-white"
-                  }`
-                }
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.name}</span>
-              </NavLink>
-            );
-          })}
+        {/* Navigation Links */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.name}
+              to={item.path}
+              end={item.path === "/dashboard" || item.path.endsWith("/dashboard")}
+              onClick={handleNavClick}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-blue-100/80 hover:bg-blue-900/50 hover:text-white"
+                }`
+              }
+            >
+              <item.icon className="w-4 h-4 shrink-0" />
+              <span>{item.name}</span>
+            </NavLink>
+          ))}
         </nav>
 
-        {/* Logout Action */}
-        <div className="p-4 border-t border-blue-900/40 bg-blue-950/40">
+        {/* Logout */}
+        <div className="p-3 border-t border-blue-900/40">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-rose-300 hover:bg-rose-950/50 hover:text-rose-200 transition-colors focus:outline-none focus:ring-1 focus:ring-rose-500"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-blue-200 hover:text-white hover:bg-rose-900/40 transition-colors w-full"
           >
             <LogOut className="w-4 h-4 shrink-0" />
-            <span>Logout Securely</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>

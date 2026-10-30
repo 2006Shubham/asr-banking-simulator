@@ -17,6 +17,9 @@ USE asr_banking;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Drop existing tables if re-initializing (in reverse dependency order)
+DROP TABLE IF EXISTS inquiry_history;
+DROP TABLE IF EXISTS inquiry_messages;
+DROP TABLE IF EXISTS inquiries;
 DROP TABLE IF EXISTS kyc;
 DROP TABLE IF EXISTS cards;
 DROP TABLE IF EXISTS fd_interest;
@@ -75,6 +78,7 @@ CREATE TABLE branches (
 -- ============================================================================
 CREATE TABLE employees (
     emp_id VARCHAR(20) NOT NULL,
+    user_id VARCHAR(20) NULL,
     branch_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     designation VARCHAR(50) NOT NULL,
@@ -85,9 +89,12 @@ CREATE TABLE employees (
     status VARCHAR(20) NOT NULL DEFAULT 'Active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_employees PRIMARY KEY (emp_id),
+    CONSTRAINT uq_employees_user UNIQUE (user_id),
     CONSTRAINT uq_employees_email UNIQUE (email),
     CONSTRAINT chk_employees_salary CHECK (salary > 0.00),
     CONSTRAINT chk_employees_status CHECK (status IN ('Active', 'OnLeave', 'Resigned')),
+    CONSTRAINT fk_employees_user FOREIGN KEY (user_id)
+        REFERENCES users (user_id) ON DELETE SET NULL,
     CONSTRAINT fk_employees_branch FOREIGN KEY (branch_id)
         REFERENCES branches (branch_id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
@@ -103,7 +110,7 @@ ALTER TABLE branches
 -- ============================================================================
 CREATE TABLE customers (
     cust_id VARCHAR(20) NOT NULL,
-    user_id VARCHAR(20) NOT NULL,
+    user_id VARCHAR(20) NULL,
     branch_id VARCHAR(20) NOT NULL,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
@@ -336,6 +343,87 @@ CREATE TABLE kyc (
         REFERENCES customers (cust_id) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
+-- ============================================================================
+-- TABLE 15: inquiries (Customer Service Complaints & Inquiries)
+-- ============================================================================
+CREATE TABLE inquiries (
+    inquiry_id VARCHAR(20) NOT NULL,
+    cust_id VARCHAR(20) NOT NULL,
+    branch_id VARCHAR(20) NOT NULL,
+    acc_no VARCHAR(30) NULL,
+    category VARCHAR(50) NOT NULL,
+    subject VARCHAR(150) NOT NULL,
+    description TEXT NOT NULL,
+    priority VARCHAR(20) NOT NULL DEFAULT 'Medium',
+    status VARCHAR(30) NOT NULL DEFAULT 'OPEN',
+    assigned_emp_id VARCHAR(20) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP NULL,
+    CONSTRAINT pk_inquiries PRIMARY KEY (inquiry_id),
+    CONSTRAINT chk_inquiries_category CHECK (category IN ('Accounts', 'Transactions', 'Cards', 'Loans', 'NetBanking', 'General')),
+    CONSTRAINT chk_inquiries_priority CHECK (priority IN ('Low', 'Medium', 'High', 'Urgent')),
+    CONSTRAINT chk_inquiries_status CHECK (status IN ('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'WAITING_FOR_CUSTOMER', 'RESOLVED', 'CLOSED', 'ESCALATED')),
+    CONSTRAINT fk_inquiries_customer FOREIGN KEY (cust_id)
+        REFERENCES customers (cust_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_inquiries_branch FOREIGN KEY (branch_id)
+        REFERENCES branches (branch_id) ON DELETE RESTRICT,
+    CONSTRAINT fk_inquiries_account FOREIGN KEY (acc_no)
+        REFERENCES accounts (acc_no) ON DELETE SET NULL,
+    CONSTRAINT fk_inquiries_employee FOREIGN KEY (assigned_emp_id)
+        REFERENCES employees (emp_id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_inquiries_status ON inquiries(status);
+CREATE INDEX idx_inquiries_branch ON inquiries(branch_id);
+CREATE INDEX idx_inquiries_emp ON inquiries(assigned_emp_id);
+CREATE INDEX idx_inquiries_cust ON inquiries(cust_id);
+
+-- ============================================================================
+-- TABLE 16: inquiry_messages (Inquiry Conversation & Internal Staff Notes)
+-- Note: is_internal = TRUE designates staff-only notes hidden from customers
+-- ============================================================================
+CREATE TABLE inquiry_messages (
+    message_id VARCHAR(20) NOT NULL,
+    inquiry_id VARCHAR(20) NOT NULL,
+    sender_user_id VARCHAR(20) NOT NULL,
+    sender_role VARCHAR(20) NOT NULL,
+    is_internal BOOLEAN NOT NULL DEFAULT FALSE,
+    message_text TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_inquiry_messages PRIMARY KEY (message_id),
+    CONSTRAINT chk_messages_role CHECK (sender_role IN ('Customer', 'Employee', 'Manager', 'Admin')),
+    CONSTRAINT fk_messages_inquiry FOREIGN KEY (inquiry_id)
+        REFERENCES inquiries (inquiry_id) ON DELETE CASCADE,
+    CONSTRAINT fk_messages_user FOREIGN KEY (sender_user_id)
+        REFERENCES users (user_id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_messages_inquiry ON inquiry_messages(inquiry_id);
+
+-- ============================================================================
+-- TABLE 17: inquiry_history (Immutable Status & Assignment Audit Ledger)
+-- ============================================================================
+CREATE TABLE inquiry_history (
+    history_id BIGINT AUTO_INCREMENT NOT NULL,
+    inquiry_id VARCHAR(20) NOT NULL,
+    changed_by_user_id VARCHAR(20) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    old_status VARCHAR(30) NULL,
+    new_status VARCHAR(30) NULL,
+    old_emp_id VARCHAR(20) NULL,
+    new_emp_id VARCHAR(20) NULL,
+    remarks VARCHAR(255) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_inquiry_history PRIMARY KEY (history_id),
+    CONSTRAINT fk_history_inquiry FOREIGN KEY (inquiry_id)
+        REFERENCES inquiries (inquiry_id) ON DELETE CASCADE,
+    CONSTRAINT fk_history_user FOREIGN KEY (changed_by_user_id)
+        REFERENCES users (user_id) ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_history_inquiry ON inquiry_history(inquiry_id);
+
 
 -- ============================================================================
 -- SAMPLE SEED DATA
@@ -363,11 +451,11 @@ INSERT INTO branches (branch_id, branch_name, ifsc_code, city, address, assets, 
 -- ----------------------------------------------------------------------------
 -- 3. SEED: employees
 -- ----------------------------------------------------------------------------
-INSERT INTO employees (emp_id, branch_id, name, designation, salary, email, phone, hire_date, status) VALUES
-('EMP001', 'BR001', 'Rajesh Sharma', 'Branch Manager', 95000.00, 'rajesh.sharma@asrbank.com', '+91 98220 11223', '2021-03-15', 'Active'),
-('EMP002', 'BR001', 'Pooja Patil', 'Senior Accountant', 65000.00, 'pooja.patil@asrbank.com', '+91 98220 44556', '2022-07-01', 'Active'),
-('EMP003', 'BR002', 'Vikram Malhotra', 'Branch Manager', 105000.00, 'vikram.m@asrbank.com', '+91 98220 77889', '2020-01-10', 'Active'),
-('EMP004', 'BR002', 'Sneha Kulkarni', 'Compliance Officer', 72000.00, 'sneha.k@asrbank.com', '+91 98220 99001', '2023-04-18', 'Active');
+INSERT INTO employees (emp_id, user_id, branch_id, name, designation, salary, email, phone, hire_date, status) VALUES
+('EMP001', 'USR101', 'BR001', 'Rajesh Sharma', 'Branch Manager', 95000.00, 'rajesh.sharma@asrbank.com', '+91 98220 11223', '2021-03-15', 'Active'),
+('EMP002', 'USR102', 'BR001', 'Pooja Patil', 'Senior Accountant', 65000.00, 'pooja.patil@asrbank.com', '+91 98220 44556', '2022-07-01', 'Active'),
+('EMP003', NULL, 'BR002', 'Vikram Malhotra', 'Branch Manager', 105000.00, 'vikram.m@asrbank.com', '+91 98220 77889', '2020-01-10', 'Active'),
+('EMP004', NULL, 'BR002', 'Sneha Kulkarni', 'Compliance Officer', 72000.00, 'sneha.k@asrbank.com', '+91 98220 99001', '2023-04-18', 'Active');
 
 -- Safely assign branch managers after employee records exist
 UPDATE branches SET manager_id = 'EMP001' WHERE branch_id = 'BR001';
@@ -379,7 +467,8 @@ UPDATE branches SET manager_id = 'EMP003' WHERE branch_id = 'BR002';
 -- ----------------------------------------------------------------------------
 INSERT INTO customers (cust_id, user_id, branch_id, name, email, dob, gender, phone, address, aadhar_no, pan_no) VALUES
 ('CUST001', 'USR001', 'BR001', 'Suraj Walke', 'suraj@example.com', '1995-08-14', 'Male', '+91 98765 43210', 'Flat 402, Shivajinagar, Pune, Maharashtra - 411005', 'XXXX-XXXX-9012', 'ABCDE1234F'),
-('CUST002', 'USR002', 'BR001', 'Anita Shinde', 'anita@example.com', '1998-03-22', 'Female', '+91 91234 56789', 'B-12, Kothrud Heights, Pune, Maharashtra - 411038', 'XXXX-XXXX-4567', 'XYZPK9876L');
+('CUST002', 'USR002', 'BR001', 'Anita Shinde', 'anita@example.com', '1998-03-22', 'Female', '+91 91234 56789', 'B-12, Kothrud Heights, Pune, Maharashtra - 411038', 'XXXX-XXXX-4567', 'XYZPK9876L'),
+('CUST003', NULL, 'BR001', 'Ramesh Patil', 'ramesh.patil@example.com', '1988-11-05', 'Male', '+91 98223 34455', 'Plot 14, Baner Road, Pune, Maharashtra - 411045', 'XXXX-XXXX-7890', 'ABCDE9999Z');
 
 -- ----------------------------------------------------------------------------
 -- 5. SEED: accounts
@@ -387,7 +476,8 @@ INSERT INTO customers (cust_id, user_id, branch_id, name, email, dob, gender, ph
 INSERT INTO accounts (acc_no, cust_id, branch_id, acc_type, balance, open_date, status) VALUES
 ('ACC001', 'CUST001', 'BR001', 'Savings', 45000.50, '2024-01-15', 'Active'),
 ('ACC002', 'CUST001', 'BR001', 'Current', 120000.00, '2024-05-10', 'Active'),
-('ACC003', 'CUST002', 'BR001', 'Savings', 68500.00, '2024-02-20', 'Active');
+('ACC003', 'CUST002', 'BR001', 'Savings', 68500.00, '2024-02-20', 'Active'),
+('ACC004', 'CUST003', 'BR001', 'Savings', 55000.00, '2024-03-10', 'Active');
 
 -- ----------------------------------------------------------------------------
 -- 6. SEED: transactions
@@ -474,6 +564,44 @@ INSERT INTO kyc (kyc_id, cust_id, kyc_type, doc_details, verified_on, verified_b
 ('KYC001', 'CUST001', 'Aadhaar Card', 'UIDAI Biometric Verified (XXXX XXXX 9012)', '2024-01-20', 'Operations Admin', 'Verified'),
 ('KYC002', 'CUST001', 'PAN Card', 'NSDL Verified (ABCDE••••F)', '2024-01-22', 'Compliance Officer', 'Verified'),
 ('KYC003', 'CUST002', 'Aadhaar Card', 'UIDAI Biometric Verified (XXXX XXXX 4567)', '2024-02-25', 'Operations Admin', 'Verified');
+
+-- ----------------------------------------------------------------------------
+-- 15. SEED: inquiries (Customer Service & Branch Operations)
+-- Demonstrates: Assigned, Unassigned Queue, Escalated, and Resolved Cases
+-- ----------------------------------------------------------------------------
+INSERT INTO inquiries (inquiry_id, cust_id, branch_id, acc_no, category, subject, description, priority, status, assigned_emp_id, created_at, resolved_at) VALUES
+('INQ1001', 'CUST001', 'BR001', 'ACC001', 'Transactions', 'Query regarding Debit Transaction TXN001', 'I noticed a debit of Rs. 1200 on 28th Sep. Could you verify the merchant settlement details?', 'Medium', 'ASSIGNED', 'EMP002', '2026-09-29 11:15:00', NULL),
+('INQ1002', 'CUST001', 'BR001', 'ACC002', 'Cards', 'Request for contactless card limit enhancement', 'Please consider enhancing the daily POS and contactless transaction limits on my corporate card.', 'High', 'OPEN', NULL, '2026-09-30 09:30:00', NULL),
+('INQ1003', 'CUST002', 'BR001', 'ACC003', 'NetBanking', 'SMS alerts not received for recent transfers', 'I am not receiving OTP and transaction SMS alerts on my registered phone +91 91234 56789.', 'Urgent', 'ESCALATED', 'EMP002', '2026-09-28 14:20:00', NULL),
+('INQ1004', 'CUST002', 'BR001', 'ACC003', 'Accounts', 'Address update request confirmation', 'I submitted my utility bill for residential address verification at the branch counter. Is the record updated?', 'Low', 'RESOLVED', 'EMP002', '2026-09-25 10:00:00', '2026-09-26 16:45:00');
+
+-- ----------------------------------------------------------------------------
+-- 16. SEED: inquiry_messages
+-- Demonstrates customer-visible communication vs. internal staff notes (is_internal)
+-- ----------------------------------------------------------------------------
+INSERT INTO inquiry_messages (message_id, inquiry_id, sender_user_id, sender_role, is_internal, message_text, created_at) VALUES
+('MSG1001', 'INQ1001', 'USR001', 'Customer', FALSE, 'I noticed a debit of Rs. 1200 on 28th Sep. Could you verify the merchant settlement details?', '2026-09-29 11:15:00'),
+('MSG1002', 'INQ1001', 'USR102', 'Employee', FALSE, 'Dear Suraj, we have reviewed your ledger. The transaction was processed at Grocery Supermarket POS terminal under reference UPI/2026/0928/8912.', '2026-09-29 12:40:00'),
+('MSG1003', 'INQ1001', 'USR102', 'Employee', TRUE, 'Internal Note: Switch trace shows successful authorization token #AUT-99214. No chargeback claim received.', '2026-09-29 12:41:00'),
+('MSG1004', 'INQ1002', 'USR001', 'Customer', FALSE, 'Please consider enhancing the daily POS and contactless transaction limits on my corporate card.', '2026-09-30 09:30:00'),
+('MSG1005', 'INQ1003', 'USR002', 'Customer', FALSE, 'I am not receiving OTP and transaction SMS alerts on my registered phone +91 91234 56789.', '2026-09-28 14:20:00'),
+('MSG1006', 'INQ1003', 'USR102', 'Employee', TRUE, 'Internal Note: Telco gateway returned code 429 DND suppression. Escalating to Branch Manager for telecom profile reset.', '2026-09-28 15:30:00'),
+('MSG1007', 'INQ1004', 'USR002', 'Customer', FALSE, 'I submitted my utility bill for residential address verification at the branch counter. Is the record updated?', '2026-09-25 10:00:00'),
+('MSG1008', 'INQ1004', 'USR102', 'Employee', FALSE, 'Dear Anita, your KYC address has been successfully verified and updated on the core banking system.', '2026-09-26 16:45:00');
+
+-- ----------------------------------------------------------------------------
+-- 17. SEED: inquiry_history (Audit Trail)
+-- ----------------------------------------------------------------------------
+INSERT INTO inquiry_history (inquiry_id, changed_by_user_id, action, old_status, new_status, old_emp_id, new_emp_id, remarks, created_at) VALUES
+('INQ1001', 'USR001', 'CREATED', NULL, 'OPEN', NULL, NULL, 'Inquiry submitted by customer via NetBanking', '2026-09-29 11:15:00'),
+('INQ1001', 'USR102', 'CLAIMED', 'OPEN', 'ASSIGNED', NULL, 'EMP002', 'Inquiry claimed by Senior Accountant Pooja Patil', '2026-09-29 11:45:00'),
+('INQ1002', 'USR001', 'CREATED', NULL, 'OPEN', NULL, NULL, 'Inquiry submitted by customer via NetBanking', '2026-09-30 09:30:00'),
+('INQ1003', 'USR002', 'CREATED', NULL, 'OPEN', NULL, NULL, 'Inquiry submitted by customer via NetBanking', '2026-09-28 14:20:00'),
+('INQ1003', 'USR102', 'CLAIMED', 'OPEN', 'ASSIGNED', NULL, 'EMP002', 'Inquiry assigned to Pooja Patil', '2026-09-28 14:45:00'),
+('INQ1003', 'USR102', 'ESCALATED', 'ASSIGNED', 'ESCALATED', 'EMP002', 'EMP002', 'Escalated to Branch Manager for Telco gateway override', '2026-09-28 15:35:00'),
+('INQ1004', 'USR002', 'CREATED', NULL, 'OPEN', NULL, NULL, 'Inquiry submitted by customer via NetBanking', '2026-09-25 10:00:00'),
+('INQ1004', 'USR102', 'CLAIMED', 'OPEN', 'ASSIGNED', NULL, 'EMP002', 'Assigned to Pooja Patil', '2026-09-25 11:00:00'),
+('INQ1004', 'USR102', 'STATUS_CHANGE', 'ASSIGNED', 'RESOLVED', 'EMP002', 'EMP002', 'Address proof verified with electricity board document', '2026-09-26 16:45:00');
 
 -- ============================================================================
 -- END OF INITIALIZATION SCRIPT

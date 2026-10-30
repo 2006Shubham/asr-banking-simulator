@@ -9,6 +9,8 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  ArrowRight,
+  UserPlus,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { Card, Button, Input, Modal } from "../../components/common";
@@ -19,24 +21,19 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-
-  // Modals for Forgot Password & New User registration
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
-  const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, getRoleHome } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Destination route after login
-  const from = location.state?.from?.pathname || "/dashboard";
+  const from = location.state?.from?.pathname || null;
 
-  // If already authenticated, redirect to dashboard immediately
   useEffect(() => {
     if (isAuthenticated) {
-      navigate(from, { replace: true });
+      navigate(from && from !== "/login" ? from : getRoleHome(), { replace: true });
     }
-  }, [isAuthenticated, navigate, from]);
+  }, [isAuthenticated, navigate, from, getRoleHome]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,7 +49,8 @@ const LoginPage = () => {
     try {
       const res = await login(username, password);
       if (res.success) {
-        navigate(from, { replace: true });
+        const destination = from && from !== "/login" ? from : getRoleHome(res.role);
+        navigate(destination, { replace: true });
       } else {
         setError(res.error || "Invalid username or password. Please try again.");
       }
@@ -63,16 +61,27 @@ const LoginPage = () => {
     }
   };
 
-  // Helper function to auto-fill demo credentials for quick evaluation
-  const handleAutoFill = () => {
+  const handleFillCustomer = () => {
     setUsername("suraj_w");
+    setPassword("demo123");
+    setError("");
+  };
+
+  const handleFillEmployee = () => {
+    setUsername("pooja_acc");
+    setPassword("demo123");
+    setError("");
+  };
+
+  const handleFillManager = () => {
+    setUsername("rajesh_mgr");
     setPassword("demo123");
     setError("");
   };
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-between">
-      {/* Mini Top Header */}
+      {/* Top Header */}
       <header className="bg-white border-b border-slate-200 py-3.5 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
@@ -101,66 +110,86 @@ const LoginPage = () => {
       {/* Main Login Card Section */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex items-center justify-center">
         <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Left Column: Security & Advisories Card */}
+          {/* Left Column: Security & Role Fillers */}
           <div className="lg:col-span-5 bg-[#002244] text-white rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-lg border border-blue-950">
             <div className="space-y-6">
               <div>
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-900/60 border border-blue-800 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-3">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Security Advisory</span>
+                  <span>Secure Portal Access</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  Safe & Secure NetBanking
+                  Multi-Role Banking
                 </h2>
                 <p className="text-xs text-blue-200/80 mt-2 leading-relaxed">
-                  Protecting your financial confidentiality through rigorous access controls.
+                  Log in to access your role-specific workspace (Customer, Employee, or Branch Manager).
                 </p>
               </div>
 
-              <div className="space-y-3.5 text-xs text-blue-100/90">
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Verify URL displays <strong>http://localhost:5173</strong> before logging in.</span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Never share your password, OTP, or CVV with anyone—including bank staff.</span>
-                </div>
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>Always use the "Logout Securely" button when ending your session.</span>
+              {/* Demo Credentials Quick-Select */}
+              <div className="p-4 rounded-xl bg-blue-950/80 border border-blue-800/80 space-y-2.5">
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider block">
+                  Quick Demo Login (Password: demo123)
+                </span>
+                <div className="flex flex-col gap-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={handleFillCustomer}
+                    className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
+                  >
+                    <div>
+                      <span className="font-semibold text-white">suraj_w</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Suraj Walke</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-blue-900 text-blue-200 font-bold">
+                      CUSTOMER
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleFillEmployee}
+                    className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
+                  >
+                    <div>
+                      <span className="font-semibold text-white">pooja_acc</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Pooja Patil</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-900 text-emerald-200 font-bold">
+                      EMPLOYEE
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleFillManager}
+                    className="flex items-center justify-between p-2 rounded bg-slate-900/80 hover:bg-slate-900 border border-blue-900 text-left transition"
+                  >
+                    <div>
+                      <span className="font-semibold text-white">rajesh_mgr</span>
+                      <span className="text-[10px] text-blue-300 ml-2">Rajesh Sharma</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900 text-amber-200 font-bold">
+                      MANAGER
+                    </span>
+                  </button>
                 </div>
               </div>
 
-              {/* Demo Credentials Helper Pill */}
-              <div className="p-4 rounded-xl bg-blue-950/80 border border-blue-800/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                    Demo Credentials
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleAutoFill}
-                    className="text-[11px] font-semibold text-blue-200 hover:text-white underline cursor-pointer"
-                  >
-                    Click to Auto-fill
-                  </button>
+              <div className="space-y-2 text-xs text-blue-100/80">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>256-Bit SSL Encrypted Endpoints</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                  <div className="bg-slate-900/80 p-2 rounded border border-blue-900">
-                    <p className="text-[10px] text-blue-300 font-sans">Username</p>
-                    <p className="font-semibold text-white">suraj_w</p>
-                  </div>
-                  <div className="bg-slate-900/80 p-2 rounded border border-blue-900">
-                    <p className="text-[10px] text-blue-300 font-sans">Password</p>
-                    <p className="font-semibold text-white">demo123</p>
-                  </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Automatic role-based dashboard redirection</span>
                 </div>
               </div>
             </div>
 
             <div className="pt-6 border-t border-blue-900/60 text-[11px] text-blue-300/70">
-              Institutional NetBanking Portal • Secure Access Gateway
+              ASR Bank Simulator • Live MySQL Database
             </div>
           </div>
 
@@ -175,16 +204,16 @@ const LoginPage = () => {
                     <ShieldCheck className="w-3.5 h-3.5" />
                     256-Bit SSL Encrypted
                   </span>
-                  <span>Official Customer Portal</span>
+                  <span>Official Banking Portal</span>
                 </div>
               }
             >
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-slate-900">
-                  NetBanking Login
+                  Account Sign In
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Access your accounts, transactions, loans, and fixed deposits.
+                  Enter your Username and Password to access your banking dashboard.
                 </p>
               </div>
 
@@ -201,11 +230,11 @@ const LoginPage = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
-                  label="Customer ID / Username"
+                  label="Username"
                   name="username"
                   id="username"
                   required
-                  placeholder="Enter username (e.g. suraj_w)"
+                  placeholder="e.g. suraj_w, pooja_acc, or rajesh_mgr"
                   value={username}
                   onChange={(e) => {
                     setUsername(e.target.value);
@@ -216,12 +245,12 @@ const LoginPage = () => {
                 />
 
                 <Input
-                  label="NetBanking Password"
+                  label="Password"
                   name="password"
                   id="password"
                   required
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter password (e.g. demo123)"
+                  placeholder="Enter your password (e.g. demo123)"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
@@ -251,15 +280,15 @@ const LoginPage = () => {
                     onClick={() => setForgotModalOpen(true)}
                     className="text-slate-500 hover:text-[#003366] font-medium transition cursor-pointer"
                   >
-                    Forgot Password / User ID?
+                    Forgot Password?
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegisterModalOpen(true)}
-                    className="text-[#003366] font-semibold hover:underline cursor-pointer"
+                  <Link
+                    to="/register"
+                    className="text-[#003366] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
                   >
-                    Register New User
-                  </button>
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>Register New Account</span>
+                  </Link>
                 </div>
 
                 <Button
@@ -271,23 +300,28 @@ const LoginPage = () => {
                   icon={Lock}
                   className="mt-3 bg-[#003366] hover:bg-[#002244] text-white py-2.5 text-sm font-bold shadow-sm"
                 >
-                  {submitting ? "Verifying Credentials..." : "Login to NetBanking"}
+                  {submitting ? "Signing in..." : "Sign In to Portal"}
                 </Button>
               </form>
 
-              {/* Security Advisory */}
-              <div className="mt-6 p-3 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#003366] shrink-0 mt-0.5" />
-                <span>
-                  <strong>Security Advisory:</strong> Always verify that you are connecting to official ASR Bank NetBanking. Never share your password, OTP, or PIN with anyone.
-                </span>
+              {/* Registration Banner */}
+              <div className="mt-6 p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 text-xs flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-[#003366]">Have an ASR Bank Account?</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Register for NetBanking with your Account Number</p>
+                </div>
+                <Link
+                  to="/register"
+                  className="px-3 py-1.5 bg-[#003366] text-white text-xs font-semibold rounded-lg hover:bg-[#002244] transition shrink-0"
+                >
+                  Register Now
+                </Link>
               </div>
             </Card>
           </div>
         </div>
       </main>
 
-      {/* Mini Footer */}
       <footer className="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white">
         © 2026 ASR Bank Ltd. All rights reserved.
       </footer>
@@ -296,59 +330,20 @@ const LoginPage = () => {
       <Modal
         isOpen={forgotModalOpen}
         onClose={() => setForgotModalOpen(false)}
-        title="Forgot Password / Customer ID"
-        description="Self-service credential recovery"
+        title="Account Recovery"
+        description="Demo Password Reference"
         footer={
           <Button variant="primary" size="sm" onClick={() => setForgotModalOpen(false)}>
-            Understood
+            Close
           </Button>
         }
       >
         <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-          <p>
-            For instant access and credential recovery verification, the following credentials are provided:
-          </p>
+          <p>All seeded user accounts currently share the standard demo password:</p>
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-1 font-mono">
-            <p><strong>Customer ID / Username:</strong> suraj_w</p>
-            <p><strong>NetBanking Password:</strong> demo123</p>
+            <p><strong>Demo Password:</strong> demo123</p>
           </div>
-          <p>
-            An instant verification OTP has been routed to your registered contact channel (<code>suraj@example.com</code>).
-          </p>
-        </div>
-      </Modal>
-
-      {/* New User Registration Modal */}
-      <Modal
-        isOpen={registerModalOpen}
-        onClose={() => setRegisterModalOpen(false)}
-        title="New User Registration"
-        description="Digital banking account registration"
-        footer={
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setRegisterModalOpen(false)}>
-              Cancel
-            </Button>
-            <Link to="/contact" onClick={() => setRegisterModalOpen(false)}>
-              <Button variant="primary" size="sm">
-                Contact Nearest Branch
-              </Button>
-            </Link>
-          </div>
-        }
-      >
-        <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
-          <p>
-            New customer onboarding requires a verified Customer ID and linked Savings or Current
-            account with ASR Bank.
-          </p>
-          <p>
-            For immediate portal access, you may log in using your registered credentials:
-            <span className="font-mono font-bold text-slate-800 ml-1">suraj_w</span>.
-          </p>
-          <p>
-            Or visit our <strong>Branch Locator</strong> page to apply for new account opening.
-          </p>
+          <p>For newly registered users, use the password created during registration.</p>
         </div>
       </Modal>
     </div>

@@ -113,9 +113,13 @@ public class AccountController {
      * CREATE: Creates a new account via manual SQL INSERT in AccountDao.
      */
     @PostMapping
-    public ResponseEntity<Account> createAccount(@RequestBody Account account) {
-        Account saved = accountDao.insertAccount(account);
-        return ResponseEntity.ok(saved);
+    public ResponseEntity<?> createAccount(@RequestBody Account account) {
+        try {
+            Account saved = accountDao.insertAccount(account);
+            return ResponseEntity.ok(saved);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
+        }
     }
 
     /**
@@ -123,13 +127,17 @@ public class AccountController {
      */
     @PatchMapping("/{accNo}/status")
     public ResponseEntity<?> updateAccountStatus(@PathVariable String accNo, @RequestBody StatusUpdateRequest request) {
-        boolean updated = accountDao.updateAccountStatus(accNo, request.getStatus());
-        if (updated) {
-            return accountDao.findAccountByNumber(accNo)
-                    .<ResponseEntity<?>>map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.notFound().build());
-        } else {
-            return ResponseEntity.notFound().build();
+        try {
+            boolean updated = accountDao.updateAccountStatus(accNo, request.getStatus());
+            if (updated) {
+                return accountDao.findAccountByNumber(accNo)
+                        .<ResponseEntity<?>>map(ResponseEntity::ok)
+                        .orElseGet(() -> ResponseEntity.notFound().build());
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 
@@ -156,11 +164,15 @@ public class AccountController {
      */
     @PostMapping("/{accNo}/close")
     public ResponseEntity<?> closeAccount(@PathVariable String accNo) {
-        boolean closed = accountDao.closeAccount(accNo);
-        if (closed) {
-            return ResponseEntity.ok(java.util.Map.of("message", "Account " + accNo + " closed successfully."));
-        } else {
-            return ResponseEntity.notFound().build();
+        try {
+            boolean closed = accountDao.closeAccount(accNo);
+            if (closed) {
+                return ResponseEntity.ok(java.util.Map.of("message", "Account " + accNo + " closed successfully."));
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", e.getMessage()));
         }
     }
 

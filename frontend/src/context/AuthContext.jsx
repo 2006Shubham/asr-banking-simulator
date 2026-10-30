@@ -8,6 +8,8 @@ const STORAGE_KEY = "asr_bank_session";
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [customer, setCustomer] = useState(null);
+  const [employee, setEmployee] = useState(null);
+  const [branch, setBranch] = useState(null);
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,9 @@ export const AuthProvider = ({ children }) => {
         const session = JSON.parse(stored);
         if (session && session.user && session.token) {
           setUser(session.user);
-          setCustomer(session.customer);
+          setCustomer(session.customer || null);
+          setEmployee(session.employee || null);
+          setBranch(session.branch || null);
           setToken(session.token);
           setIsAuthenticated(true);
         }
@@ -34,9 +38,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   /**
-   * Login function
-   * Delegates credential validation to authService.
-   * On success: persists session in localStorage and sets state.
+   * Login function — delegates to authService.
    */
   const login = async (username, password) => {
     try {
@@ -45,17 +47,21 @@ export const AuthProvider = ({ children }) => {
       const session = {
         token: data.token,
         user: data.user,
-        customer: data.customer,
+        customer: data.customer || null,
+        employee: data.employee || null,
+        branch: data.branch || null,
       };
 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 
       setUser(data.user);
-      setCustomer(data.customer);
+      setCustomer(data.customer || null);
+      setEmployee(data.employee || null);
+      setBranch(data.branch || null);
       setToken(data.token);
       setIsAuthenticated(true);
 
-      return { success: true };
+      return { success: true, user: data.user, role: data.user?.role };
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -66,16 +72,55 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
-   * Logout function
-   * Clears state and localStorage session.
+   * Register function
+   */
+  const register = async (payload) => {
+    try {
+      const res = await authService.register(payload);
+      return { success: true, data: res };
+    } catch (err) {
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Registration failed. Please check your account details.";
+      return { success: false, error: message };
+    }
+  };
+
+  /**
+   * Logout function — clears state and localStorage.
    */
   const logout = () => {
     authService.logout();
     localStorage.removeItem(STORAGE_KEY);
     setUser(null);
     setCustomer(null);
+    setEmployee(null);
+    setBranch(null);
     setToken(null);
     setIsAuthenticated(false);
+  };
+
+  // Role helper utilities
+  const isCustomer = () => user?.role === "Customer";
+  const isEmployee = () => user?.role === "Employee";
+  const isManager = () => user?.role === "Manager";
+  const isAdmin = () => user?.role === "Admin";
+  const isStaff = () => isEmployee() || isManager() || isAdmin();
+
+  /**
+   * Returns the home route based on the logged-in user's role (or explicit role passed).
+   */
+  const getRoleHome = (roleOverride) => {
+    const role = roleOverride || user?.role;
+    if (!role) return "/dashboard";
+    switch (role) {
+      case "Customer": return "/dashboard";
+      case "Employee": return "/employee/dashboard";
+      case "Manager":  return "/manager/dashboard";
+      case "Admin":    return "/dashboard";
+      default:         return "/dashboard";
+    }
   };
 
   return (
@@ -83,11 +128,20 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         customer,
+        employee,
+        branch,
         token,
         isAuthenticated,
         loading,
         login,
+        register,
         logout,
+        isCustomer,
+        isEmployee,
+        isManager,
+        isAdmin,
+        isStaff,
+        getRoleHome,
       }}
     >
       {children}
@@ -102,5 +156,3 @@ export const useAuth = () => {
   }
   return context;
 };
-
-export default AuthProvider;
