@@ -102,12 +102,24 @@ public class TransactionDao {
             }
 
             // 5. STEP 3: CREDIT RECEIVER ACCOUNT (If destination account exists)
+            String targetAcc = request.getToAccNo();
+            if ((targetAcc == null || targetAcc.isBlank()) && request.getBeneficiary() != null) {
+                String ben = request.getBeneficiary().trim().toUpperCase();
+                if (ben.matches("^ACC\\d+$")) {
+                    targetAcc = ben;
+                }
+            }
+
+            if (targetAcc != null && targetAcc.equalsIgnoreCase(request.getFromAccNo())) {
+                throw new IllegalArgumentException("Source and Destination accounts cannot be the same.");
+            }
+
             boolean internalCredit = false;
-            if (request.getToAccNo() != null && !request.getToAccNo().isBlank()) {
+            if (targetAcc != null && !targetAcc.isBlank()) {
                 String creditSql = "UPDATE accounts SET balance = balance + ? WHERE acc_no = ?";
                 try (PreparedStatement psCredit = conn.prepareStatement(creditSql)) {
                     psCredit.setBigDecimal(1, request.getAmount());
-                    psCredit.setString(2, request.getToAccNo());
+                    psCredit.setString(2, targetAcc);
                     int rows = psCredit.executeUpdate();
                     if (rows > 0) {
                         internalCredit = true;
@@ -123,7 +135,7 @@ public class TransactionDao {
 
             String desc = (request.getDescription() != null && !request.getDescription().isBlank())
                         ? request.getDescription()
-                        : "Transfer to " + (request.getBeneficiary() != null ? request.getBeneficiary() : request.getToAccNo());
+                        : "Transfer to " + (targetAcc != null ? targetAcc : (request.getBeneficiary() != null ? request.getBeneficiary() : "External Beneficiary"));
 
             LocalDateTime now = LocalDateTime.now();
 
@@ -147,7 +159,7 @@ public class TransactionDao {
             if (internalCredit) {
                 try (PreparedStatement psCrTxn = conn.prepareStatement(insertTxnSql)) {
                     psCrTxn.setString(1, "TXN" + (System.currentTimeMillis() + 1));
-                    psCrTxn.setString(2, request.getToAccNo());
+                    psCrTxn.setString(2, targetAcc);
                     psCrTxn.setString(3, "Credit");
                     psCrTxn.setBigDecimal(4, request.getAmount());
                     psCrTxn.setTimestamp(5, Timestamp.valueOf(now));
