@@ -1,7 +1,7 @@
 -- ============================================================================
 -- ASR Bank Simulator — Institutional Core Banking Relational Database Schema
 -- Project: DBMS Mini-Project (ASR Bank)
--- Team Members: Rutuja, Suraj, Atharva, Shubham
+-- Team Members: Rutuja Peherkar, Suraj Wakhure, Atharva Wadekar, Shubham Deshmukh
 -- Target Database: MySQL 8.0+
 -- Script: database/Initialize.sql (Stage 1 Implementation)
 -- ============================================================================

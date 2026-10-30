@@ -3,7 +3,7 @@
 **Project:** ASR Bank Simulator — Institutional Core Banking Relational Database  
 **Database Engine:** MySQL 8.0+ / InnoDB  
 **Academic Module:** Stage 7 (Normalization Proofs 1NF to BCNF, Relational Invariants & Constraint Catalog)  
-**Authors:** Rutuja, Suraj, Atharva, Shubham  
+**Authors:** Rutuja Peherkar, Suraj Wakhure, Atharva Wadekar, Shubham Deshmukh  
 
 ---
 

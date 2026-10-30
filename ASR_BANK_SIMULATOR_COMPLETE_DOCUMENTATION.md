@@ -1,6 +1,6 @@
 # ASR Bank Simulator — Complete Technical Documentation & System Reference
 
-> **Author / Project Team:** Rutuja, Suraj, Atharva, Shubham  
+> **Author / Project Team:** Rutuja Peherkar, Suraj Wakhure, Atharva Wadekar, Shubham Deshmukh  
 > **Academic Subject:** Database Management Systems (DBMS) Mini-Project  
 > **Course / Degree:** Computer Science & Engineering / Information Technology  
 > **Target Platform:** MySQL 8.0+ / 9.x, Spring Boot 4.1.1 (Java 21), React 19 (Vite)  

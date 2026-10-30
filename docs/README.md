@@ -21,7 +21,7 @@ This folder contains stage-by-stage documentation of all architectural decisions
 ---
 
 ## 👥 Project Team
-* **Rutuja**
-* **Suraj**
-* **Atharva**
-* **Shubham**
+* **Rutuja Peherkar**
+* **Suraj Wakhure**
+* **Atharva Wadekar**
+* **Shubham Deshmukh**

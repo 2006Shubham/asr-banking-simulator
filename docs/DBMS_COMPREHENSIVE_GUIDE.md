@@ -4,7 +4,7 @@
 **Target Database Engine:** MySQL 8.0+ (InnoDB Storage Engine)  
 **Backend Framework:** Java 21 / Spring Boot 4.1.1 (Standard JDBC & Spring Data JPA)  
 **Document Location:** `docs/DBMS_COMPREHENSIVE_GUIDE.md`  
-**Authors & Engineering Team:** Rutuja, Suraj, Atharva, Shubham  
+**Authors & Engineering Team:** Rutuja Peherkar, Suraj Wakhure, Atharva Wadekar, Shubham Deshmukh  
 
 ---
 
